@@ -61,7 +61,8 @@ export function errorMiddleware(err, req, res, _next) {
   const activeLogger = req?.logger ?? logger;
   const meta = {
     code,
-    requestId: req?.logger?.requestId,
+    requestId: req?.requestId ?? req?.logger?.requestId,
+    userId: req?.user?.id,
     method: req?.method,
     url: req?.originalUrl
   };

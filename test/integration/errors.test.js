@@ -42,9 +42,9 @@ describe('Plan 02 - manejo global de errores', () => {
     expect(res.body.error).to.equal(ERROR_CODES.UNAUTHORIZED);
   });
 
-  it('cantidad de mocks invalida -> 400 INVALID_MOCKS_AMOUNT', () => {
+  it('cantidad de mocks invalida -> 400 INVALID_MOCKS_AMOUNT', async () => {
     try {
-      mocksService.generateUsers([]);
+      await mocksService.seedData({ users: [], couriers: [], orders: [], deliveries: [], documents: [] });
       expect.fail('debio lanzar INVALID_MOCKS_AMOUNT');
     } catch (err) {
       expect(err.code).to.equal(ERROR_CODES.INVALID_MOCKS_AMOUNT);

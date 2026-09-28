@@ -1,11 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import swaggerUi from 'swagger-ui-express';
 import { apiRouter } from './routes/index.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
-import { swaggerSpec } from './config/swagger.js';
+import { swaggerRouter, sendSwaggerJson } from './config/swagger.js';
 
 export function createApp() {
   const app = express();
@@ -14,10 +13,13 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(loggerMiddleware);
   app.use('/api/v1', apiRouter);
-  app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.get('/api/v1/docs.json', (req, res) => res.json(swaggerSpec));
-  app.get('/api/docs.json', (req, res) => res.json(swaggerSpec));
+  // UI interactiva en las dos rutas: la consigna cita /api/docs y el
+  // versionado del proyecto usa /api/v1. El JSON plano sale del mismo
+  // objeto en memoria, por eso ambas respuestas son identicas.
+  app.use('/api/v1/docs', swaggerRouter);
+  app.use('/api/docs', swaggerRouter);
+  app.get('/api/v1/docs.json', sendSwaggerJson);
+  app.get('/api/docs.json', sendSwaggerJson);
   app.use(notFoundHandler);
   app.use(errorMiddleware);
   return app;

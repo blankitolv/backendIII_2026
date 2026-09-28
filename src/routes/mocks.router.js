@@ -1,8 +1,20 @@
 import { Router } from 'express';
-import { generateMocks } from '../controllers/mocks.controller.js';
-import { validate } from '../middlewares/validate.middleware.js';
-import { mocksValidator } from '../validators/mocks.validator.js';
+import {
+  generateData,
+  generateUsers,
+  generateOrders,
+  generateDeliveries,
+  generateFull,
+  clearMocks
+} from '../controllers/mocks.controller.js';
+import { esOperacionInterna } from '../middlewares/internal.middleware.js';
 
 export const mocksRouter = Router();
 
-mocksRouter.post('/', validate(mocksValidator), generateMocks);
+mocksRouter.use(esOperacionInterna());
+mocksRouter.post('/generateData', generateData);
+mocksRouter.post('/users', generateUsers);
+mocksRouter.post('/orders', generateOrders);
+mocksRouter.post('/deliveries', generateDeliveries);
+mocksRouter.post('/full', generateFull);
+mocksRouter.delete('/', clearMocks);

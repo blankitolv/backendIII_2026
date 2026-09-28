@@ -1,5 +1,6 @@
 import { documentsDao } from '../dao/repositories/documents.dao.js';
 import { notFound } from '../utils/errorFactory.js';
+import { logger } from '../utils/logger.js';
 
 export class DocumentsService {
   constructor({ documents = documentsDao } = {}) {
@@ -18,7 +19,10 @@ export class DocumentsService {
     return document;
   }
 
-  create(data) {
+  async create(data) {
+    logger.debug(
+      `Archivo recibido: ${data?.originalName ?? data?.fileName} (${data?.size ?? 0} bytes, ${data?.mimeType ?? data?.mimetype}).`
+    );
     return this.documents.create(data);
   }
 }

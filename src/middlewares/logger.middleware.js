@@ -1,11 +1,21 @@
+import crypto from 'node:crypto';
 import { logger } from '../utils/logger.js';
 
 export function loggerMiddleware(req, res, next) {
-  req.logger = logger.child({ requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}` });
+  req.logger = logger;
+  req.requestId = req.headers['x-request-id'] ?? crypto.randomUUID();
+  res.setHeader('x-request-id', req.requestId);
   const started = Date.now();
   res.on('finish', () => {
-    logger.http(`${req.method} ${req.originalUrl} ${res.statusCode}`, {
-      durationMs: Date.now() - started
+    const durationMs = Date.now() - started;
+    req.logger.http(`${req.method} en ${req.originalUrl} ${res.statusCode} - ${durationMs}ms`, {
+      requestId: req.requestId,
+      userId: req.user?.id,
+      method: req.method,
+      url: req.originalUrl,
+      statusCode: res.statusCode,
+      durationMs,
+      ip: req.ip
     });
   });
   next();

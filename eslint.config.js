@@ -1,4 +1,4 @@
 export default [
   { ignores: ['node_modules/**', 'coverage/**'] },
-  { rules: {} }
+  { rules: { 'no-console': 'error' } }
 ];

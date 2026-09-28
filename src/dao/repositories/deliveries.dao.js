@@ -13,6 +13,10 @@ export class DeliveriesDao {
     return DeliveryModel.bulkWrite(ops);
   }
 
+  async deleteMany(filter = {}) {
+    return DeliveryModel.deleteMany(filter);
+  }
+
   async findById(id) {
     return DeliveryModel.findById(id);
   }

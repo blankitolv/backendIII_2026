@@ -13,6 +13,10 @@ export class UsersDao {
     return UserModel.bulkWrite(ops);
   }
 
+  async deleteMany(filter = {}) {
+    return UserModel.deleteMany(filter);
+  }
+
   async findById(id) {
     return UserModel.findById(id);
   }

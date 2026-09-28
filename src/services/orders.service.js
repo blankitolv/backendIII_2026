@@ -1,6 +1,7 @@
 import { ordersDao } from '../dao/repositories/orders.dao.js';
 import { notFound, invalidState } from '../utils/errorFactory.js';
 import { ORDER_STATUS, ORDER_TRANSITIONS } from '../constants/orderStatus.js';
+import { logger } from '../utils/logger.js';
 
 export class OrdersService {
   constructor({ orders = ordersDao } = {}) {
@@ -19,8 +20,11 @@ export class OrdersService {
     return order;
   }
 
-  create(data) {
-    return this.orders.create({ ...data, status: ORDER_STATUS.CREATED });
+  async create(data) {
+    logger.debug(`Iniciando creacion de envio para el user: ${data?.user}`);
+    const result = await this.orders.create({ ...data, status: ORDER_STATUS.CREATED });
+    logger.debug(`Envio creado con tracking ${result?.trackingNumber}`);
+    return result;
   }
 
   async updateStatus(id, next) {
@@ -32,6 +36,7 @@ export class OrdersService {
     if (!allowed.includes(next)) {
       throw invalidState(order.status, allowed);
     }
+    logger.debug(`Cambio de estado de envio ${id}: ${order.status} -> ${next}`);
     return this.orders.updateById(id, { status: next });
   }
 }

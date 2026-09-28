@@ -6,7 +6,7 @@ import { deliveriesRouter } from './deliveries.router.js';
 import { documentsRouter } from './documents.router.js';
 import { mocksRouter } from './mocks.router.js';
 import { healthRouter } from './health.router.js';
-import { config } from '../config/config.js';
+import { loggerRouter } from './logger.router.js';
 
 export const apiRouter = Router();
 
@@ -16,7 +16,7 @@ apiRouter.use('/orders', ordersRouter);
 apiRouter.use('/deliveries', deliveriesRouter);
 apiRouter.use('/documents', documentsRouter);
 apiRouter.use('/health', healthRouter);
-
-if (config.nodeEnv !== 'production') {
-  apiRouter.use('/mocks', mocksRouter);
-}
+apiRouter.use('/logger', loggerRouter);
+// Mocks siempre montado detras de esOperacionInterna: en produccion el guard
+// responde 403 sin tocar la base. Definicion final del guard en Plan 08.
+apiRouter.use('/mocks', mocksRouter);

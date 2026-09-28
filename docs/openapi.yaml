@@ -1,0 +1,1379 @@
+openapi: 3.0.0
+info:
+  title: ShipNow API
+  version: 1.0.0
+  description: >-
+    API backend de la plataforma de envios ShipNow. Todas las respuestas usan
+    la envoltura { status: "success", data } en exito y
+    { status: "error", error, message } en error. Las entidades van en ingles
+    (User, Order, Delivery, Document) por decision del proyecto.
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Servidor local
+tags:
+  - name: health
+    description: Estado del servicio
+  - name: auth
+    description: Registro, login y perfil
+  - name: users
+    description: Usuarios (lectura)
+  - name: orders
+    description: Pedidos de envio
+  - name: deliveries
+    description: Entregas
+  - name: documents
+    description: Documentos y comprobantes (lectura)
+  - name: mocks
+    description: Datos de prueba (operacion interna, no disponible en produccion)
+  - name: logger
+    description: Auditoria de logs (solo ADMIN)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    internalToken:
+      type: apiKey
+      in: header
+      name: x-internal-token
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 64f1a2b3c4d5e6f70819293a
+    page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    cantidad:
+      name: cantidad
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      example: 10
+    seed:
+      name: seed
+      in: query
+      required: false
+      schema:
+        type: integer
+      description: Semilla para datos reproducibles
+      example: 42
+    lines:
+      name: lines
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+  schemas:
+    User:
+      type: object
+      required: [id, name, email, role, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, customer, courier, store]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: 64f1a2b3c4d5e6f70819293a
+        name: Ana Gomez
+        email: ana@example.com
+        role: customer
+        createdAt: 2026-09-28T10:00:00.000Z
+        updatedAt: 2026-09-28T10:00:00.000Z
+    Order:
+      type: object
+      required: [id, trackingNumber, status, origin, destination, weightKg, deliveryAddress, priority, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        trackingNumber:
+          type: string
+        status:
+          type: string
+          enum: [created, assigned, picked_up, in_transit, delivered, cancelled]
+        origin:
+          type: string
+        destination:
+          type: string
+        weightKg:
+          type: number
+        deliveryAddress:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: 64f1a2b3c4d5e6f70819293b
+        trackingNumber: SN-2026-000123
+        status: created
+        origin: Buenos Aires
+        destination: Cordoba
+        weightKg: 2.5
+        deliveryAddress: Av. Colon 1234
+        priority: normal
+        createdAt: 2026-09-28T10:00:00.000Z
+        updatedAt: 2026-09-28T10:00:00.000Z
+    Delivery:
+      type: object
+      required: [id, order, courier, status, deliveredAt, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        order:
+          type: string
+          nullable: true
+        courier:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [created, assigned, picked_up, in_transit, delivered, cancelled]
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: 64f1a2b3c4d5e6f70819293c
+        order: 64f1a2b3c4d5e6f70819293b
+        courier: 64f1a2b3c4d5e6f70819293d
+        status: assigned
+        deliveredAt: null
+        createdAt: 2026-09-28T10:00:00.000Z
+        updatedAt: 2026-09-28T10:00:00.000Z
+    Document:
+      type: object
+      required: [id, originalName, mimeType, size, type, parentModel, parentId, uploadedAt]
+      properties:
+        id:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: number
+        type:
+          type: string
+          enum: [user_document, courier_license, delivery_proof]
+        parentModel:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        uploadedAt:
+          type: string
+          format: date-time
+      example:
+        id: 64f1a2b3c4d5e6f70819293e
+        originalName: comprobante.pdf
+        mimeType: application/pdf
+        size: 184320
+        type: delivery_proof
+        parentModel: Delivery
+        parentId: 64f1a2b3c4d5e6f70819293c
+        uploadedAt: 2026-09-28T10:00:00.000Z
+    AuthMe:
+      type: object
+      required: [id, role]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [admin, customer, courier, store]
+      example:
+        id: 64f1a2b3c4d5e6f70819293a
+        role: customer
+    AuthToken:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+    Health:
+      type: object
+      required: [status, uptime, version]
+      properties:
+        status:
+          type: string
+          example: up
+        uptime:
+          type: number
+        version:
+          type: string
+          example: 1.0.0
+    PageMeta:
+      type: object
+      required: [page, limit, total]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+    UserList:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    OrderList:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    DeliveryList:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Delivery'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    DocumentList:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    MocksCounts:
+      type: object
+      required: [users, couriers, orders, deliveries, documents]
+      properties:
+        users:
+          type: integer
+        couriers:
+          type: integer
+        orders:
+          type: integer
+        deliveries:
+          type: integer
+        documents:
+          type: integer
+      example:
+        users: 5
+        couriers: 2
+        orders: 6
+        deliveries: 4
+        documents: 3
+    MocksCleared:
+      type: object
+      required: [users, orders, deliveries, documents]
+      properties:
+        users:
+          type: integer
+        orders:
+          type: integer
+        deliveries:
+          type: integer
+        documents:
+          type: integer
+      example:
+        users: 5
+        orders: 6
+        deliveries: 4
+        documents: 3
+    LogLines:
+      type: object
+      required: [file, lines]
+      properties:
+        file:
+          type: string
+          example: combined.log
+        lines:
+          type: array
+          items:
+            type: string
+    RespuestaExitosa:
+      type: object
+      required: [status, data]
+      properties:
+        status:
+          type: string
+          enum: [success]
+        data:
+          description: Carga util segun el endpoint
+    Error:
+      type: object
+      required: [status, error, message]
+      properties:
+        status:
+          type: string
+          enum: [error]
+        error:
+          type: string
+          enum: [INCOMPLETE_VALUES, INVALID_VALUES, INVALID_STATE, INVALID_MOCKS_AMOUNT, FILE_REQUIRED, RESOURCE_NOT_FOUND, DUPLICATE_RESOURCE, UNAUTHORIZED, FORBIDDEN, FILE_TOO_LARGE, INVALID_FILE_TYPE, RATE_LIMIT_EXCEEDED, INTERNAL_SERVER_ERROR]
+        message:
+          type: string
+      example:
+        status: error
+        error: RESOURCE_NOT_FOUND
+        message: No se encontro ningun pedido con el ID especificado.
+    RegisterInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+          enum: [admin, customer, courier, store]
+      example:
+        name: Ana Gomez
+        email: ana@example.com
+        password: secreto123
+        role: customer
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      example:
+        email: ana@example.com
+        password: secreto123
+    OrderInput:
+      type: object
+      required: [user, trackingNumber, origin, destination, weightKg, deliveryAddress]
+      properties:
+        user:
+          type: string
+        trackingNumber:
+          type: string
+        origin:
+          type: string
+        destination:
+          type: string
+        weightKg:
+          type: number
+        deliveryAddress:
+          type: string
+      example:
+        user: 64f1a2b3c4d5e6f70819293a
+        trackingNumber: SN-2026-000123
+        origin: Buenos Aires
+        destination: Cordoba
+        weightKg: 2.5
+        deliveryAddress: Av. Colon 1234
+    DeliveryInput:
+      type: object
+      required: [order, courier]
+      properties:
+        order:
+          type: string
+        courier:
+          type: string
+      example:
+        order: 64f1a2b3c4d5e6f70819293b
+        courier: 64f1a2b3c4d5e6f70819293d
+    MocksGenerateInput:
+      type: object
+      properties:
+        users:
+          type: integer
+          minimum: 0
+          maximum: 100
+        couriers:
+          type: integer
+          minimum: 0
+          maximum: 100
+        orders:
+          type: integer
+          minimum: 0
+          maximum: 200
+        deliveries:
+          type: integer
+          minimum: 0
+          maximum: 200
+        documents:
+          type: integer
+          minimum: 0
+          maximum: 200
+        seed:
+          type: integer
+      example:
+        users: 5
+        couriers: 2
+        orders: 6
+        deliveries: 4
+        documents: 3
+        seed: 42
+  responses:
+    Error400:
+      description: Peticion invalida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: INCOMPLETE_VALUES
+            message: 'Faltan campos obligatorios: email, password son requeridos.'
+    Error401:
+      description: Sin autenticacion
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: UNAUTHORIZED
+            message: Credenciales invalidas o token expirado.
+    Error403:
+      description: Sin permisos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: FORBIDDEN
+            message: No tiene permisos para esta accion.
+    Error404:
+      description: Recurso inexistente
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: RESOURCE_NOT_FOUND
+            message: No se encontro ningun pedido con el ID especificado.
+    Error409:
+      description: Conflicto
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: DUPLICATE_RESOURCE
+            message: Ya existe un recurso con ese email.
+    Error413:
+      description: Archivo demasiado grande
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: FILE_TOO_LARGE
+            message: El archivo supera el limite permitido de 5242880 bytes.
+    Error415:
+      description: Tipo de archivo invalido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: INVALID_FILE_TYPE
+            message: 'Tipo de archivo invalido. Permitidos: application/pdf, image/jpeg.'
+    Error429:
+      description: Limite de peticiones excedido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: RATE_LIMIT_EXCEEDED
+            message: Demasiadas peticiones, intente mas tarde.
+    Error500:
+      description: Error interno
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            status: error
+            error: INTERNAL_SERVER_ERROR
+            message: Error interno del servidor.
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Estado del servicio
+      tags: [health]
+      responses:
+        '200':
+          description: Servicio en linea
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Health'
+              example:
+                status: success
+                data:
+                  status: up
+                  uptime: 12.34
+                  version: 1.0.0
+        '500':
+          $ref: '#/components/responses/Error500'
+  /auth/register:
+    post:
+      operationId: registerUser
+      summary: Registrar un usuario
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/User'
+              example:
+                status: success
+                data:
+                  id: 64f1a2b3c4d5e6f70819293a
+                  name: Ana Gomez
+                  email: ana@example.com
+                  role: customer
+                  createdAt: 2026-09-28T10:00:00.000Z
+                  updatedAt: 2026-09-28T10:00:00.000Z
+        '400':
+          $ref: '#/components/responses/Error400'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /auth/login:
+    post:
+      operationId: loginUser
+      summary: Iniciar sesion
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Sesion iniciada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/AuthToken'
+              example:
+                status: success
+                data:
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ejemplo.firma
+                  user:
+                    id: 64f1a2b3c4d5e6f70819293a
+                    name: Ana Gomez
+                    email: ana@example.com
+                    role: customer
+                    createdAt: 2026-09-28T10:00:00.000Z
+                    updatedAt: 2026-09-28T10:00:00.000Z
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Perfil del token actual
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Identidad del token
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/AuthMe'
+              example:
+                status: success
+                data:
+                  id: 64f1a2b3c4d5e6f70819293a
+                  role: customer
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /users:
+    get:
+      operationId: listUsers
+      summary: Listar usuarios
+      tags: [users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/UserList'
+              example:
+                status: success
+                data:
+                  items: []
+                  meta:
+                    page: 1
+                    limit: 10
+                    total: 0
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /users/{id}:
+    get:
+      operationId: getUserById
+      summary: Obtener un usuario
+      tags: [users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /orders:
+    get:
+      operationId: listOrders
+      summary: Listar pedidos
+      tags: [orders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/OrderList'
+              example:
+                status: success
+                data:
+                  items: []
+                  meta:
+                    page: 1
+                    limit: 10
+                    total: 0
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      operationId: createOrder
+      summary: Crear un pedido
+      tags: [orders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Pedido creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /orders/{id}:
+    get:
+      operationId: getOrderById
+      summary: Obtener un pedido
+      tags: [orders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /deliveries:
+    get:
+      operationId: listDeliveries
+      summary: Listar entregas
+      tags: [deliveries]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/DeliveryList'
+              example:
+                status: success
+                data:
+                  items: []
+                  meta:
+                    page: 1
+                    limit: 10
+                    total: 0
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      operationId: createDelivery
+      summary: Crear una entrega
+      tags: [deliveries]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryInput'
+      responses:
+        '201':
+          description: Entrega creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Delivery'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /deliveries/{id}:
+    get:
+      operationId: getDeliveryById
+      summary: Obtener una entrega
+      tags: [deliveries]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Entrega encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Delivery'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /documents:
+    get:
+      operationId: listDocuments
+      summary: Listar documentos
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/DocumentList'
+              example:
+                status: success
+                data:
+                  items: []
+                  meta:
+                    page: 1
+                    limit: 10
+                    total: 0
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /documents/{id}:
+    get:
+      operationId: getDocumentById
+      summary: Obtener un documento
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Documento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/generateData:
+    post:
+      operationId: generateMocks
+      summary: Sembrar mocks por conteos
+      tags: [mocks]
+      security:
+        - internalToken: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MocksGenerateInput'
+      responses:
+        '200':
+          description: Conteos sembrados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/MocksCounts'
+              example:
+                status: success
+                data:
+                  users: 5
+                  couriers: 2
+                  orders: 6
+                  deliveries: 4
+                  documents: 3
+        '400':
+          $ref: '#/components/responses/Error400'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/users:
+    post:
+      operationId: generateMockUsers
+      summary: Sembrar usuarios de prueba
+      tags: [mocks]
+      security:
+        - internalToken: []
+      parameters:
+        - $ref: '#/components/parameters/cantidad'
+        - $ref: '#/components/parameters/seed'
+      responses:
+        '200':
+          description: Usuarios sembrados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    required: [users]
+                    properties:
+                      users:
+                        type: integer
+              example:
+                status: success
+                data:
+                  users: 3
+        '400':
+          $ref: '#/components/responses/Error400'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/orders:
+    post:
+      operationId: generateMockOrders
+      summary: Sembrar pedidos de prueba
+      tags: [mocks]
+      security:
+        - internalToken: []
+      parameters:
+        - $ref: '#/components/parameters/cantidad'
+        - $ref: '#/components/parameters/seed'
+      responses:
+        '200':
+          description: Pedidos sembrados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    required: [users, orders]
+                    properties:
+                      users:
+                        type: integer
+                      orders:
+                        type: integer
+              example:
+                status: success
+                data:
+                  users: 0
+                  orders: 2
+        '400':
+          $ref: '#/components/responses/Error400'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/deliveries:
+    post:
+      operationId: generateMockDeliveries
+      summary: Sembrar entregas de prueba
+      tags: [mocks]
+      security:
+        - internalToken: []
+      parameters:
+        - $ref: '#/components/parameters/cantidad'
+        - $ref: '#/components/parameters/seed'
+      responses:
+        '200':
+          description: Entregas sembradas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    required: [users, couriers, orders, deliveries]
+                    properties:
+                      users:
+                        type: integer
+                      couriers:
+                        type: integer
+                      orders:
+                        type: integer
+                      deliveries:
+                        type: integer
+              example:
+                status: success
+                data:
+                  users: 0
+                  couriers: 0
+                  orders: 0
+                  deliveries: 2
+        '400':
+          $ref: '#/components/responses/Error400'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/full:
+    post:
+      operationId: generateMockFull
+      summary: Sembrar respaldo completo consistente
+      tags: [mocks]
+      security:
+        - internalToken: []
+      parameters:
+        - $ref: '#/components/parameters/cantidad'
+        - $ref: '#/components/parameters/seed'
+      responses:
+        '200':
+          description: Respaldo sembrado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/MocksCounts'
+              example:
+                status: success
+                data:
+                  users: 5
+                  couriers: 2
+                  orders: 5
+                  deliveries: 5
+                  documents: 5
+        '400':
+          $ref: '#/components/responses/Error400'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks:
+    delete:
+      operationId: clearMocks
+      summary: Limpiar mocks sembrados
+      tags: [mocks]
+      security:
+        - internalToken: []
+      responses:
+        '200':
+          description: Colecciones limpiadas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/MocksCleared'
+              example:
+                status: success
+                data:
+                  users: 5
+                  orders: 6
+                  deliveries: 4
+                  documents: 3
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /logger/recent:
+    get:
+      operationId: getRecentLogs
+      summary: Ultimas lineas del log combinado
+      tags: [logger]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/lines'
+      responses:
+        '200':
+          description: Lineas recientes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/LogLines'
+              example:
+                status: success
+                data:
+                  file: combined.log
+                  lines: []
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /logger/error-lines:
+    get:
+      operationId: getErrorLogs
+      summary: Ultimas lineas del log de errores
+      tags: [logger]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/lines'
+      responses:
+        '200':
+          description: Lineas de error recientes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/LogLines'
+              example:
+                status: success
+                data:
+                  file: error.log
+                  lines: []
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /logger/test:
+    post:
+      operationId: writeTestLogs
+      summary: Escribir entradas de prueba en los logs
+      tags: [logger]
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Entradas escritas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    required: [written]
+                    properties:
+                      written:
+                        type: boolean
+              example:
+                status: success
+                data:
+                  written: true
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
