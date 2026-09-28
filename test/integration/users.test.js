@@ -14,9 +14,9 @@ describe('integration - users', () => {
     const { token } = await createUserAndToken();
     const res = await request(app).get('/api/v1/users').set('Authorization', `Bearer ${token}`);
     expect(res.status).to.equal(200);
-    expect(res.body.data.items).to.be.an('array');
-    expect(res.body.data.meta).to.deep.include({ page: 1, limit: 10 });
-    for (const item of res.body.data.items) {
+    expect(res.body.data).to.be.an('array');
+    expect(res.body.meta).to.deep.include({ page: 1, limit: 10 });
+    for (const item of res.body.data) {
       expect(item).to.not.have.property('password');
     }
   });

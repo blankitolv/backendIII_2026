@@ -8,6 +8,10 @@ import { DocumentModel } from '../../src/dao/models/document.model.js';
 let mongo = null;
 let users = 0;
 
+export async function testUri() {
+  return mongo?.getUri() ?? null;
+}
+
 export async function cleanDatabase() {
   if (mongoose.connection.readyState !== 1) {
     return;

@@ -6,6 +6,7 @@ import { ordersDao } from '../dao/repositories/orders.dao.js';
 import { deliveriesDao } from '../dao/repositories/deliveries.dao.js';
 import { ROLES } from '../constants/roles.js';
 import { DOCUMENT_TYPES } from '../constants/documentTypes.js';
+import { SORTABLE_FIELDS, parseSort } from '../constants/sortFields.js';
 import { forbidden, notFound } from '../utils/errorFactory.js';
 import { logger } from '../utils/logger.js';
 
@@ -25,16 +26,20 @@ export class DocumentsService {
     this.parents = parents;
   }
 
-  list(query) {
-    return this.documents.paginate(query);
+  list(query = {}) {
+    return this.documents.paginate({}, this.orderingOptions(query));
   }
 
-  listByType(type, query) {
-    return this.documents.listByType(type, query);
+  listByType(type, query = {}) {
+    return this.documents.listByType(type, this.orderingOptions(query));
   }
 
-  listByParent(parentModel, parentId, query) {
-    return this.documents.listByParent(parentModel, parentId, query);
+  listByParent(parentModel, parentId, query = {}) {
+    return this.documents.listByParent(parentModel, parentId, this.orderingOptions(query));
+  }
+
+  orderingOptions({ page, limit, sort } = {}) {
+    return { page, limit, sort: parseSort(SORTABLE_FIELDS.document, sort) };
   }
 
   async getById(id) {

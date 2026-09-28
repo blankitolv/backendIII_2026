@@ -173,8 +173,8 @@ describe('integration - uploads', () => {
       .get('/api/v1/documents?type=courier_license')
       .set('Authorization', `Bearer ${tokenAdmin}`);
     expect(listado.status).to.equal(200);
-    expect(listado.body.data.meta.total).to.equal(1);
-    expect(listado.body.data.items[0].type).to.equal(DOCUMENT_TYPES.COURIER_LICENSE);
+    expect(listado.body.meta.total).to.equal(1);
+    expect(listado.body.data[0].type).to.equal(DOCUMENT_TYPES.COURIER_LICENSE);
   });
 
   it('descarga devuelve el binario con el Content-Type correcto', async () => {

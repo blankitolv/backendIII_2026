@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { apiRouter } from './routes/index.js';
+import { config } from './config/config.js';
+import { crearRateLimiter } from './middlewares/rateLimit.middleware.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
@@ -8,9 +10,24 @@ import { swaggerRouter, sendSwaggerJson } from './config/swagger.js';
 
 export function createApp() {
   const app = express();
-  app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+
+  // Detras de un proxy/ingress express-rate-limit necesita el IP real, si no la
+  // limita por la IP del proxy y todas las requests comparten el bucket.
+  app.set('trust proxy', 1);
+
+  const corsOrigin =
+    config.corsOrigin === '*'
+      ? '*'
+      : config.corsOrigin.split(',').map((origin) => origin.trim());
+  app.use(cors({ origin: corsOrigin }));
+
+  // Límite de body: un payload de 100 MB no tiene negocio que lo pida y el JSON
+  // se parsea completo antes de llegar a las rutas.
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+  app.use(crearRateLimiter());
+
   app.use(loggerMiddleware);
   app.use('/api/v1', apiRouter);
   // UI interactiva en las dos rutas: la consigna cita /api/docs y el

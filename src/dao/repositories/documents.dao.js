@@ -1,5 +1,5 @@
 import { DocumentModel } from '../models/document.model.js';
-import { normalizePagination } from '../../constants/pagination.js';
+import { paginateModel } from './paginate.js';
 
 export class DocumentsDao {
   async create(data) {
@@ -22,30 +22,22 @@ export class DocumentsDao {
     return DocumentModel.findById(id);
   }
 
-  async paginate(query = {}) {
-    const { page, limit, skip } = normalizePagination(query);
-    const [items, total] = await Promise.all([
-      DocumentModel.find().skip(skip).limit(limit),
-      DocumentModel.countDocuments()
-    ]);
-    return { items, total, page, limit };
+  // El path es un campo sensible aunque el DTO lo oculte: los listados no lo
+  // traen para que un lean mal mapeado no lo filtre.
+  async paginate(filter = {}, options = {}) {
+    return paginateModel(DocumentModel)(filter, { select: '-path -__v', ...options });
   }
 
   async paginateByFilter(filter = {}, query = {}) {
-    const { page, limit, skip } = normalizePagination(query);
-    const [items, total] = await Promise.all([
-      DocumentModel.find(filter).skip(skip).limit(limit),
-      DocumentModel.countDocuments(filter)
-    ]);
-    return { items, total, page, limit };
+    return this.paginate(filter, query);
   }
 
   async listByType(type, query = {}) {
-    return this.paginateByFilter({ type }, query);
+    return this.paginate({ type }, query);
   }
 
   async listByParent(parentModel, parentId, query = {}) {
-    return this.paginateByFilter({ parentModel, parentId }, query);
+    return this.paginate({ parentModel, parentId }, query);
   }
 
   async updateById(id, data) {

@@ -31,3 +31,17 @@ export async function disconnectDb() {
   await mongoose.disconnect();
   logger.info('Conexion a MongoDB cerrada de forma ordenada.');
 }
+
+// Readiness real, no un "estoy viva": ping administrativo sobre la conexion.
+// El healthcheck de Docker del Plan 09 lo consume.
+export async function checkDatabaseReady() {
+  if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
+    return false;
+  }
+  try {
+    await mongoose.connection.db.admin().ping();
+    return true;
+  } catch {
+    return false;
+  }
+}

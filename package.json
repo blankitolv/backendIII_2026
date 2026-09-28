@@ -9,11 +9,11 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha \"test/**/*.test.js\"",
-    "test:unit": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha \"test/unit/**/*.test.js\"",
-    "test:integration": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha \"test/integration/**/*.test.js\"",
-    "test:watch": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha --watch",
-    "test:coverage": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret c8 --reporter=text --reporter=lcov mocha",
+    "test": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret RATE_LIMIT_MAX=100000 mocha \"test/**/*.test.js\"",
+    "test:unit": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret RATE_LIMIT_MAX=100000 mocha \"test/unit/**/*.test.js\"",
+    "test:integration": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret RATE_LIMIT_MAX=100000 mocha \"test/integration/**/*.test.js\"",
+    "test:watch": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret RATE_LIMIT_MAX=100000 mocha --watch",
+    "test:coverage": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret RATE_LIMIT_MAX=100000 c8 --reporter=text --reporter=lcov mocha",
     "lint": "eslint src test"
   },
   "keywords": [],
@@ -22,8 +22,13 @@
   "type": "module",
   "c8": {
     "all": true,
-    "include": ["src/**/*.js"],
-    "reporter": ["text", "lcov"],
+    "include": [
+      "src/**/*.js"
+    ],
+    "reporter": [
+      "text",
+      "lcov"
+    ],
     "check-coverage": true,
     "lines": 70,
     "functions": 60,
@@ -38,6 +43,7 @@
     "js-yaml": "^5.4.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.2",
+    "mongoose-paginate-v2": "^1.9.5",
     "multer": "^2.4.0",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0"

@@ -1,5 +1,5 @@
 import { OrderModel } from '../models/order.model.js';
-import { normalizePagination } from '../../constants/pagination.js';
+import { paginateModel } from './paginate.js';
 
 export class OrdersDao {
   async create(data) {
@@ -26,13 +26,8 @@ export class OrdersDao {
     return OrderModel.findOne({ trackingNumber });
   }
 
-  async paginate(query = {}) {
-    const { page, limit, skip } = normalizePagination(query);
-    const [items, total] = await Promise.all([
-      OrderModel.find().skip(skip).limit(limit),
-      OrderModel.countDocuments()
-    ]);
-    return { items, total, page, limit };
+  async paginate(filter = {}, options = {}) {
+    return paginateModel(OrderModel)(filter, { select: '-proofs -__v', ...options });
   }
 
   async updateById(id, data) {

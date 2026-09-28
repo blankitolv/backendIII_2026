@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
 import { DELIVERY_STATUS } from '../../constants/deliveryStatus.js';
 
 const deliverySchema = new mongoose.Schema(
@@ -11,5 +12,10 @@ const deliverySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+deliverySchema.index({ status: 1 });
+deliverySchema.index({ order: 1 });
+
+deliverySchema.plugin(mongoosePaginate);
 
 export const DeliveryModel = mongoose.model('Delivery', deliverySchema);

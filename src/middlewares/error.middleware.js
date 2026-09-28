@@ -1,6 +1,6 @@
 import { CustomError } from '../utils/customError.js';
 import { ERROR_CODES, ERROR_STATUS } from '../constants/errors.js';
-import { invalidValues, incompleteValues, duplicateResource } from '../utils/errorFactory.js';
+import { invalidValues, incompleteValues, duplicateResource, payloadTooLarge } from '../utils/errorFactory.js';
 import { logger } from '../utils/logger.js';
 
 function statusFor(code) {
@@ -41,6 +41,11 @@ export function errorMiddleware(err, req, res, _next) {
     code = ERROR_CODES.FILE_REQUIRED;
     status = statusFor(code);
     message = 'Se requiere un archivo en esta peticion.';
+  } else if (err?.type === 'entity.too.large') {
+    const wrapped = payloadTooLarge();
+    code = wrapped.code;
+    status = wrapped.statusCode;
+    message = wrapped.message;
   } else if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
     const wrapped = invalidValues(['body']);
     code = wrapped.code;

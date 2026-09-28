@@ -1,12 +1,9 @@
 import { documentsService } from '../services/documents.service.js';
 import { toDocumentDTO } from '../dto/document.dto.js';
+import { toListDTO } from '../dto/list.dto.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { fileRequired } from '../utils/errorFactory.js';
 import { DOCUMENT_TYPES } from '../constants/documentTypes.js';
-
-function toListDTO({ items, total, page, limit }) {
-  return { items: items.map(toDocumentDTO), meta: { page, limit, total } };
-}
 
 export const listDocuments = asyncHandler(async (req, res) => {
   // `type` es un filtro opcional sobre el listado general, no un endpoint aparte: una ruta
@@ -14,7 +11,15 @@ export const listDocuments = asyncHandler(async (req, res) => {
   const result = req.query.type
     ? await documentsService.listByType(req.query.type, req.query)
     : await documentsService.list(req.query);
-  res.status(200).json({ status: 'success', data: toListDTO(result) });
+  res.status(200).json({
+    status: 'success',
+    ...toListDTO(result.items.map(toDocumentDTO), {
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages
+    })
+  });
 });
 
 export const getDocument = asyncHandler(async (req, res) => {
@@ -52,19 +57,31 @@ export const uploadCourierLicense = asyncHandler((req, res) =>
   subir(req, res, { parentModel: 'User', type: DOCUMENT_TYPES.COURIER_LICENSE })
 );
 
+function respondList(res, result) {
+  res.status(200).json({
+    status: 'success',
+    ...toListDTO(result.items.map(toDocumentDTO), {
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages
+    })
+  });
+}
+
 export const listUserDocuments = asyncHandler(async (req, res) => {
   const result = await documentsService.listByParent('User', req.params.id, req.query);
-  res.status(200).json({ status: 'success', data: toListDTO(result) });
+  respondList(res, result);
 });
 
 export const listOrderProofs = asyncHandler(async (req, res) => {
   const result = await documentsService.listByParent('Order', req.params.id, req.query);
-  res.status(200).json({ status: 'success', data: toListDTO(result) });
+  respondList(res, result);
 });
 
 export const listDeliveryProofs = asyncHandler(async (req, res) => {
   const result = await documentsService.listByParent('Delivery', req.params.id, req.query);
-  res.status(200).json({ status: 'success', data: toListDTO(result) });
+  respondList(res, result);
 });
 
 export const downloadDocument = asyncHandler(async (req, res) => {

@@ -244,7 +244,7 @@ components:
           $ref: '#/components/schemas/User'
     Health:
       type: object
-      required: [status, uptime, version]
+      required: [status, uptime, version, environment, timestamp]
       properties:
         status:
           type: string
@@ -254,9 +254,15 @@ components:
         version:
           type: string
           example: 1.0.0
+        environment:
+          type: string
+          example: production
+        timestamp:
+          type: string
+          format: date-time
     PageMeta:
       type: object
-      required: [page, limit, total]
+      required: [page, limit, total, totalPages]
       properties:
         page:
           type: integer
@@ -264,46 +270,24 @@ components:
           type: integer
         total:
           type: integer
+        totalPages:
+          type: integer
     UserList:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-        meta:
-          $ref: '#/components/schemas/PageMeta'
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
     OrderList:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-        meta:
-          $ref: '#/components/schemas/PageMeta'
+      type: array
+      items:
+        $ref: '#/components/schemas/Order'
     DeliveryList:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Delivery'
-        meta:
-          $ref: '#/components/schemas/PageMeta'
+      type: array
+      items:
+        $ref: '#/components/schemas/Delivery'
     DocumentList:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Document'
-        meta:
-          $ref: '#/components/schemas/PageMeta'
+      type: array
+      items:
+        $ref: '#/components/schemas/Document'
     MocksCounts:
       type: object
       required: [users, couriers, orders, deliveries, documents]
@@ -370,7 +354,7 @@ components:
           enum: [error]
         error:
           type: string
-          enum: [INCOMPLETE_VALUES, INVALID_VALUES, INVALID_STATE, INVALID_MOCKS_AMOUNT, FILE_REQUIRED, RESOURCE_NOT_FOUND, DUPLICATE_RESOURCE, UNAUTHORIZED, FORBIDDEN, FILE_TOO_LARGE, INVALID_FILE_TYPE, RATE_LIMIT_EXCEEDED, INTERNAL_SERVER_ERROR]
+          enum: [INCOMPLETE_VALUES, INVALID_VALUES, INVALID_STATE, INVALID_MOCKS_AMOUNT, FILE_REQUIRED, RESOURCE_NOT_FOUND, DUPLICATE_RESOURCE, UNAUTHORIZED, FORBIDDEN, FILE_TOO_LARGE, INVALID_FILE_TYPE, PAYLOAD_TOO_LARGE, RATE_LIMIT_EXCEEDED, NOT_READY, INTERNAL_SERVER_ERROR]
         message:
           type: string
       example:
@@ -593,8 +577,44 @@ paths:
                   status: up
                   uptime: 12.34
                   version: 1.0.0
+                  environment: production
+                  timestamp: 2026-09-28T10:00:00.000Z
         '500':
           $ref: '#/components/responses/Error500'
+  /health/ready:
+    get:
+      operationId: getHealthReady
+      summary: Readiness del servicio (lo usa el healthcheck de Docker)
+      tags: [health]
+      responses:
+        '200':
+          description: Base de datos lista
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    required: [status]
+                    properties:
+                      status:
+                        type: string
+                        example: ready
+        '503':
+          description: Base de datos no disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: error
+                error: NOT_READY
+                message: La base de datos no esta disponible.
   /auth/register:
     post:
       operationId: registerUser
@@ -724,21 +744,23 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/UserList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
               example:
                 status: success
-                data:
-                  items: []
-                  meta:
-                    page: 1
-                    limit: 10
-                    total: 0
+                data: []
+                meta:
+                  page: 1
+                  limit: 10
+                  total: 0
+                  totalPages: 0
         '401':
           $ref: '#/components/responses/Error401'
         '500':
@@ -789,21 +811,23 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/OrderList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
               example:
                 status: success
-                data:
-                  items: []
-                  meta:
-                    page: 1
-                    limit: 10
-                    total: 0
+                data: []
+                meta:
+                  page: 1
+                  limit: 10
+                  total: 0
+                  totalPages: 0
         '401':
           $ref: '#/components/responses/Error401'
         '500':
@@ -890,21 +914,23 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/DeliveryList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
               example:
                 status: success
-                data:
-                  items: []
-                  meta:
-                    page: 1
-                    limit: 10
-                    total: 0
+                data: []
+                meta:
+                  page: 1
+                  limit: 10
+                  total: 0
+                  totalPages: 0
         '401':
           $ref: '#/components/responses/Error401'
         '500':
@@ -989,21 +1015,23 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/DocumentList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
               example:
                 status: success
-                data:
-                  items: []
-                  meta:
-                    page: 1
-                    limit: 10
-                    total: 0
+                data: []
+                meta:
+                  page: 1
+                  limit: 10
+                  total: 0
+                  totalPages: 0
         '401':
           $ref: '#/components/responses/Error401'
         '500':
@@ -1131,13 +1159,15 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/DocumentList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
         '401':
           $ref: '#/components/responses/Error401'
         '500':
@@ -1255,13 +1285,15 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/DocumentList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
         '401':
           $ref: '#/components/responses/Error401'
         '500':
@@ -1331,13 +1363,15 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, data]
+                required: [status, data, meta]
                 properties:
                   status:
                     type: string
                     enum: [success]
                   data:
                     $ref: '#/components/schemas/DocumentList'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
         '401':
           $ref: '#/components/responses/Error401'
         '500':

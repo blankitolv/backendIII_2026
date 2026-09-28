@@ -8,7 +8,8 @@ import { ORDER_STATUS } from '../constants/orderStatus.js';
 import { DELIVERY_STATUS } from '../constants/deliveryStatus.js';
 import { DELIVERY_PRIORITY } from '../constants/priorities.js';
 import { DOCUMENT_TYPES } from '../constants/documentTypes.js';
-import { MOCKS_DEFAULT_PASSWORD, MOCK_RANGES, MOCKS_FULL_MAX } from '../constants/mockRanges.js';
+import { config } from '../config/config.js';
+import { MOCKS_DEFAULT_PASSWORD, MOCK_RANGES } from '../constants/mockRanges.js';
 import { hashPassword } from '../utils/hashPassword.js';
 import { invalidValues, invalidMocksAmount } from '../utils/errorFactory.js';
 import { logger } from '../utils/logger.js';
@@ -175,7 +176,7 @@ export class MocksService {
   // MOCKS_DEFAULT_PASSWORD, asi que un solo hash alcanza para todas.
   async seedData({ users = [], couriers = [], orders = [], deliveries = [], documents = [] } = {}) {
     if (!users.length && !couriers.length && !orders.length && !deliveries.length && !documents.length) {
-      throw invalidMocksAmount(0, MOCKS_FULL_MAX);
+      throw invalidMocksAmount(0, config.mocks.maxAmount);
     }
     const password = await hashPassword(MOCKS_DEFAULT_PASSWORD);
     const withHash = (items) => items.map((item) => ({ ...item, password }));
@@ -202,7 +203,7 @@ export class MocksService {
     if (limit <= 0) {
       return [];
     }
-    const { items } = await dao.paginate({ page: 1, limit });
+    const { items } = await dao.paginate({}, { page: 1, limit });
     return items.map((item) => item._id);
   }
 
@@ -216,7 +217,7 @@ export class MocksService {
     };
     this.applySeed(seed);
     if (Object.values(counts).every((value) => value === 0)) {
-      throw invalidMocksAmount(0, MOCKS_FULL_MAX);
+      throw invalidMocksAmount(0, config.mocks.maxAmount);
     }
     if (counts.orders > 0 && counts.users === 0) {
       const existing = await this.existingIds(this.users, 1);
@@ -324,8 +325,8 @@ export class MocksService {
     if (!Number.isInteger(value) || Number.isNaN(value) || value < 1) {
       throw invalidValues(['cantidad']);
     }
-    if (value > MOCKS_FULL_MAX) {
-      throw invalidMocksAmount(1, MOCKS_FULL_MAX);
+    if (value > config.mocks.maxAmount) {
+      throw invalidMocksAmount(1, config.mocks.maxAmount);
     }
     const couriers = Math.max(1, Math.round(value / 3));
     return this.generateData({ users: value, couriers, orders: value, deliveries: value, documents: value, seed });

@@ -32,7 +32,7 @@ describe('integration - orders', () => {
       .get('/api/v1/orders')
       .set('Authorization', `Bearer ${token}`);
     expect(listed.status).to.equal(200);
-    expect(listed.body.data.meta.total).to.equal(1);
+    expect(listed.body.meta.total).to.equal(1);
   });
 
   it('campos faltantes devuelven 400 INCOMPLETE_VALUES nombrándolos', async () => {

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
 import { ORDER_STATUS } from '../../constants/orderStatus.js';
 import { DELIVERY_PRIORITY } from '../../constants/priorities.js';
 
@@ -16,5 +17,12 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Filtros frecuentes de listado: el tracking ya es unico por schema y el status
+// aparece en la mayoria de las queries paginadas.
+orderSchema.index({ status: 1 });
+orderSchema.index({ user: 1 });
+
+orderSchema.plugin(mongoosePaginate);
 
 export const OrderModel = mongoose.model('Order', orderSchema);

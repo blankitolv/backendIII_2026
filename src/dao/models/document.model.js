@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
 import { DOCUMENT_TYPES } from '../../constants/documentTypes.js';
 
 const documentSchema = new mongoose.Schema(
@@ -16,5 +17,12 @@ const documentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// El par (modelo, id) es el filtro de los listados anidados; type solo o en
+// combinacion es el de listByType. Ninguna query real busca por uno solo.
+documentSchema.index({ parentModel: 1, parentId: 1 });
+documentSchema.index({ type: 1 });
+
+documentSchema.plugin(mongoosePaginate);
 
 export const DocumentModel = mongoose.model('Document', documentSchema);

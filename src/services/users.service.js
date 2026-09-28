@@ -1,13 +1,18 @@
 import { usersDao } from '../dao/repositories/users.dao.js';
 import { notFound } from '../utils/errorFactory.js';
+import { SORTABLE_FIELDS, parseSort } from '../constants/sortFields.js';
 
 export class UsersService {
   constructor({ users = usersDao } = {}) {
     this.users = users;
   }
 
-  list(query) {
-    return this.users.paginate(query);
+  list(query = {}) {
+    const { page, limit, sort } = query;
+    return this.users.paginate(
+      {},
+      { page, limit, sort: parseSort(SORTABLE_FIELDS.user, sort) }
+    );
   }
 
   async getById(id) {

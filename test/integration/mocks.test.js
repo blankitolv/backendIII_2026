@@ -96,7 +96,7 @@ describe('Plan 03 - modulo de mocks', () => {
   it('password hasheada: compare true y login funciona', async () => {
     const created = await request(app).post('/api/v1/mocks/generateData').send({ users: 2, seed: 9 });
     expect(created.status).to.equal(200);
-    const user = await UserModel.findOne();
+    const user = await UserModel.findOne().select('+password');
     expect(user.password).to.not.equal(MOCKS_DEFAULT_PASSWORD);
     expect(await comparePassword(MOCKS_DEFAULT_PASSWORD, user.password)).to.equal(true);
     const login = await request(app)

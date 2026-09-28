@@ -10,12 +10,10 @@ winston.addColors(logColors);
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const logsDir = path.resolve(currentDir, '../../logs');
 
-const levelByEnv = {
-  development: 'debug',
-  test: 'error',
-  production: 'info'
-};
-const activeLevel = levelByEnv[config.nodeEnv] ?? 'info';
+// Nivel y formato configurables por .env (LOG_LEVEL, LOG_FORMAT); si no se
+// setean, config.js les da el default por entorno. En produccion el nivel
+// base nunca baja de info, asi el debug no degrada el Event Loop.
+const activeLevel = config.logLevel;
 
 const baseFormat = winston.format.combine(
   winston.format.timestamp(),
@@ -23,11 +21,8 @@ const baseFormat = winston.format.combine(
 );
 
 function buildFormat() {
-  if (config.nodeEnv === 'development') {
+  if (config.logFormat === 'pretty') {
     return winston.format.combine(baseFormat, winston.format.colorize(), winston.format.simple());
-  }
-  if (config.nodeEnv === 'test') {
-    return winston.format.combine(baseFormat, winston.format.json());
   }
   return winston.format.combine(baseFormat, winston.format.json());
 }

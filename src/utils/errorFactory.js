@@ -66,6 +66,21 @@ export function fileTooLarge(maxBytes) {
   );
 }
 
+export function payloadTooLarge() {
+  return build(
+    ERROR_CODES.PAYLOAD_TOO_LARGE,
+    'El cuerpo de la peticion supera el limite permitido de 1 MB.'
+  );
+}
+
+export function rateLimitExceeded() {
+  return build(ERROR_CODES.RATE_LIMIT_EXCEEDED, 'Demasiadas peticiones. Intente de nuevo mas tarde.');
+}
+
+export function notReady() {
+  return build(ERROR_CODES.NOT_READY, 'La base de datos no esta disponible.');
+}
+
 export function invalidMocksAmount(min, max) {
   return build(
     ERROR_CODES.INVALID_MOCKS_AMOUNT,

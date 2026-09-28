@@ -1,5 +1,5 @@
 import { UserModel } from '../models/user.model.js';
-import { normalizePagination } from '../../constants/pagination.js';
+import { paginateModel } from './paginate.js';
 
 export class UsersDao {
   async create(data) {
@@ -22,17 +22,14 @@ export class UsersDao {
     return UserModel.findById(id);
   }
 
+  // select false borra el password de toda proyeccion por defecto; el login es el
+  // unico que lo necesita y lo pide explicitamente.
   async findByEmail(email) {
-    return UserModel.findOne({ email });
+    return UserModel.findOne({ email }).select('+password');
   }
 
-  async paginate(query = {}) {
-    const { page, limit, skip } = normalizePagination(query);
-    const [items, total] = await Promise.all([
-      UserModel.find().skip(skip).limit(limit),
-      UserModel.countDocuments()
-    ]);
-    return { items, total, page, limit };
+  async paginate(filter = {}, options = {}) {
+    return paginateModel(UserModel)(filter, { select: '-password -__v', ...options });
   }
 
   async updateById(id, data) {

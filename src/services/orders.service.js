@@ -1,6 +1,7 @@
 import { ordersDao } from '../dao/repositories/orders.dao.js';
 import { notFound, invalidState } from '../utils/errorFactory.js';
 import { ORDER_STATUS, ORDER_TRANSITIONS } from '../constants/orderStatus.js';
+import { SORTABLE_FIELDS, parseSort } from '../constants/sortFields.js';
 import { logger } from '../utils/logger.js';
 
 export class OrdersService {
@@ -8,8 +9,12 @@ export class OrdersService {
     this.orders = orders;
   }
 
-  list(query) {
-    return this.orders.paginate(query);
+  list(query = {}) {
+    const { page, limit, sort } = query;
+    return this.orders.paginate(
+      {},
+      { page, limit, sort: parseSort(SORTABLE_FIELDS.order, sort) }
+    );
   }
 
   async getById(id) {

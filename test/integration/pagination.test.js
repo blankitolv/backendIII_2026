@@ -21,16 +21,16 @@ describe('integration - pagination', () => {
       .get('/api/v1/users?page=2&limit=10')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).to.equal(200);
-    expect(res.body.data.items).to.have.length(10);
-    expect(res.body.data.meta).to.deep.equal({ page: 2, limit: 10, total: 26 });
+    expect(res.body.data).to.have.length(10);
+    expect(res.body.meta).to.deep.equal({ page: 2, limit: 10, total: 26, totalPages: 3 });
   });
 
   it('sin query usa page 1 y limit 10', async () => {
     const { token } = await createUserAndToken();
     const res = await request(app).get('/api/v1/users').set('Authorization', `Bearer ${token}`);
     expect(res.status).to.equal(200);
-    expect(res.body.data.items).to.have.length(10);
-    expect(res.body.data.meta).to.deep.include({ page: 1, limit: 10, total: 26 });
+    expect(res.body.data).to.have.length(10);
+    expect(res.body.meta).to.deep.include({ page: 1, limit: 10, total: 26 });
   });
 
   it('limit gigante se acota al maximo', async () => {
@@ -39,7 +39,7 @@ describe('integration - pagination', () => {
       .get('/api/v1/users?limit=500')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).to.equal(200);
-    expect(res.body.data.meta.limit).to.equal(100);
-    expect(res.body.data.meta.total).to.equal(26);
+    expect(res.body.meta.limit).to.equal(100);
+    expect(res.body.meta.total).to.equal(26);
   });
 });

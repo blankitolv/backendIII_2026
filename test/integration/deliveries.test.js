@@ -41,7 +41,7 @@ describe('integration - deliveries', () => {
       .get('/api/v1/deliveries')
       .set('Authorization', `Bearer ${token}`);
     expect(listed.status).to.equal(200);
-    expect(listed.body.data.meta.total).to.equal(1);
+    expect(listed.body.meta.total).to.equal(1);
     const fetched = await request(app)
       .get(`/api/v1/deliveries/${created.body.data.id}`)
       .set('Authorization', `Bearer ${token}`);

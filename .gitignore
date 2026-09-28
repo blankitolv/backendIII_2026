@@ -1,9 +1,12 @@
 node_modules/
 .env
+.env.local
 *.log
+npm-debug.log*
 logs/
-uploads/*
+uploads/**
 !uploads/.gitkeep
-coverage/
 .nyc_output/
+coverage/
+.DS_Store
 NOTAS-PLANES.md

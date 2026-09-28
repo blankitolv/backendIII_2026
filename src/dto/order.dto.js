@@ -19,10 +19,3 @@ export function toOrderDTO(order) {
     updatedAt: toIso(data.updatedAt)
   };
 }
-
-export function toListDTO(items, { page, limit, total }) {
-  return {
-    items,
-    meta: { page, limit, total }
-  };
-}

@@ -23,6 +23,7 @@ const yamlSpec = loadYaml(readFileSync(yamlPath, 'utf8'));
 
 const MINIMUM_PATHS = [
   '/health',
+  '/health/ready',
   '/auth/register',
   '/auth/login',
   '/auth/me',

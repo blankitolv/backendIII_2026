@@ -35,7 +35,7 @@ describe('integration - config', () => {
 
   it('exporta puerto y valores con tipos correctos', async () => {
     expect(config.port).to.be.a('number');
-    expect(config.jwtExpiresIn).to.equal('1h');
+    expect(config.jwtExpiresIn).to.equal('2h');
     expect(config.nodeEnv).to.equal('test');
     expect(config.internalToken).to.equal(null);
   });

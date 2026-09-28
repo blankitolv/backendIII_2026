@@ -20,8 +20,8 @@ describe('integration - documents', () => {
       .get('/api/v1/documents')
       .set('Authorization', `Bearer ${token}`);
     expect(listed.status).to.equal(200);
-    expect(listed.body.data.meta.total).to.equal(1);
-    expect(listed.body.data.items[0]).to.not.have.property('path');
+    expect(listed.body.meta.total).to.equal(1);
+    expect(listed.body.data[0]).to.not.have.property('path');
     const fetched = await request(app)
       .get(`/api/v1/documents/${created._id}`)
       .set('Authorization', `Bearer ${token}`);
