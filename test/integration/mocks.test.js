@@ -29,7 +29,7 @@ async function cleanAll() {
   ]);
 }
 
-describe('Plan 03 - modulo de mocks', () => {
+describe('Modulo de mocks', () => {
   before(async () => {
     mongo = await MongoMemoryServer.create();
     await mongoose.connect(mongo.getUri());
@@ -186,7 +186,7 @@ describe('Plan 03 - modulo de mocks', () => {
   });
 
   it('en produccion responde 403 FORBIDDEN sin tocar la base', async () => {
-    // Caso explicito de production permitido por el plan: el guard niega
+    // Caso explicito de production: el guard niega
     // antes de llegar al service, asi que el subproceso no necesita Mongo.
     const currentDir = path.dirname(fileURLToPath(import.meta.url));
     const appUrl = pathToFileURL(path.resolve(currentDir, '../../src/app.js')).href;

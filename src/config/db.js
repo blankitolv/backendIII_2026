@@ -33,7 +33,7 @@ export async function disconnectDb() {
 }
 
 // Readiness real, no un "estoy viva": ping administrativo sobre la conexion.
-// El healthcheck de Docker del Plan 09 lo consume.
+// El healthcheck de Docker lo consume.
 export async function checkDatabaseReady() {
   if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
     return false;

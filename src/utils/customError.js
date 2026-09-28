@@ -1,7 +1,7 @@
 import { ERROR_CODES, ERROR_STATUS } from '../constants/errors.js';
 
-// Plan signature: new CustomError(message, statusCode, code, details).
-// Legacy tolerance: new CustomError(code, message) from Sesion 01 still works.
+// Constructor signature: new CustomError(message, statusCode, code, details).
+// Tolerancia retrocompatible: new CustomError(code, message).
 export class CustomError extends Error {
   constructor(message, statusCode, code, details) {
     if (

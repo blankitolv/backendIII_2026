@@ -9,4 +9,9 @@ uploads/**
 .nyc_output/
 coverage/
 .DS_Store
+*.tmp
 NOTAS-PLANES.md
+planes/
+prompts/
+AGENTS.md
+entrega.md

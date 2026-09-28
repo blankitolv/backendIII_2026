@@ -30,7 +30,7 @@ async function waitForRecent(token, needle) {
   expect.fail(`linea de log no aparecio: ${needle}`);
 }
 
-describe('Plan 04 - logging con Winston', () => {
+describe('Logging con Winston', () => {
   it('enmascara password y token con [REDACTED] y nunca escribe valores', () => {
     const format = formatRedact();
     const out = format.transform(

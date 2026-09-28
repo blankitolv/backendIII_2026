@@ -14,7 +14,7 @@ function assertErrorShape(body) {
   expect(body.status).to.equal('error');
 }
 
-describe('Plan 02 - manejo global de errores', () => {
+describe('Manejo global de errores', () => {
   before(useTestDatabase);
   after(releaseTestDatabase);
   it('ruta inexistente -> 404 RESOURCE_NOT_FOUND', async () => {

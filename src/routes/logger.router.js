@@ -3,7 +3,7 @@ import { getRecentLogs, getErrorLogs, postLoggerTest } from '../controllers/logg
 import { requireAuth, requireRole } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../constants/roles.js';
 
-// Protegido con ADMIN hasta que el Plan 03 defina el middleware de operacion interna.
+// Protegido con ADMIN para auditoria interna de logs.
 export const loggerRouter = Router();
 
 loggerRouter.use(requireAuth, requireRole(ROLES.ADMIN));

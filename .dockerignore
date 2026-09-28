@@ -12,6 +12,9 @@ tests
 docs
 !docs/openapi.yaml
 planes
+prompts
+AGENTS.md
+entrega.md
 README.md
 uploads/**
 !uploads/.gitkeep

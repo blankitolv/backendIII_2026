@@ -123,7 +123,7 @@ function collectRefs(node, refs = []) {
   return refs;
 }
 
-describe('Plan 05 - documentacion con Swagger', () => {
+describe('Documentacion con Swagger', () => {
   let spec;
 
   before(async () => {
@@ -153,7 +153,7 @@ describe('Plan 05 - documentacion con Swagger', () => {
     expect(spec).to.deep.equal(yamlSpec);
   });
 
-  it('contiene los paths minimos del plan', async () => {
+  it('contiene los paths minimos requeridos', async () => {
     for (const minimum of MINIMUM_PATHS) {
       expect(spec.paths, `path ${minimum}`).to.have.property(minimum);
     }

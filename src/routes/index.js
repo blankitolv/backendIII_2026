@@ -19,5 +19,5 @@ apiRouter.use('/documents', documentsRouter);
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/logger', loggerRouter);
 // Mocks siempre montado detras de esOperacionInterna: en produccion el guard
-// responde 403 sin tocar la base. Definicion final del guard en Plan 08.
+// responde 403 sin tocar la base.
 apiRouter.use('/mocks', mocksRouter);
