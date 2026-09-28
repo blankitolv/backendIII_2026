@@ -33,7 +33,7 @@ export class UsersDao {
   }
 
   async updateById(id, data) {
-    return UserModel.findByIdAndUpdate(id, data, { new: true });
+    return UserModel.findByIdAndUpdate(id, data, { returnDocument: 'after' });
   }
 
   async deleteById(id) {

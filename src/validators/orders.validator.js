@@ -1,3 +1,5 @@
+import { ORDER_STATUS } from '../constants/orderStatus.js';
+
 export const orderValidator = {
   body: {
     user: { required: true, type: 'string' },
@@ -12,5 +14,14 @@ export const orderValidator = {
 export const orderIdValidator = {
   params: {
     id: { required: true, type: 'string' }
+  }
+};
+
+export const orderStatusValidator = {
+  params: {
+    id: { required: true, type: 'string' }
+  },
+  body: {
+    status: { required: true, enum: Object.values(ORDER_STATUS) }
   }
 };

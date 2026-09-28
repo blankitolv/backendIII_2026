@@ -66,4 +66,31 @@ describe('integration - deliveries', () => {
     expect(res.status).to.equal(404);
     expect(res.body.error).to.equal(ERROR_CODES.RESOURCE_NOT_FOUND);
   });
+
+  it('PATCH /status actualiza estado y setea deliveredAt cuando pasa a delivered', async () => {
+    const { token, order, courierId } = await seedOrderAndCourier();
+    const created = await request(app)
+      .post('/api/deliveries')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ order: String(order._id), courier: courierId });
+    expect(created.status).to.equal(201);
+    const deliveryId = created.body.data.id;
+
+    // PATCH /api/deliveries/:id/status a in_transit
+    const patchTransit = await request(app)
+      .patch(`/api/deliveries/${deliveryId}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'in_transit' });
+    expect(patchTransit.status).to.equal(200);
+    expect(patchTransit.body.data.status).to.equal('in_transit');
+
+    // PATCH a delivered: asigna deliveredAt
+    const patchDelivered = await request(app)
+      .patch(`/api/deliveries/${deliveryId}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'delivered' });
+    expect(patchDelivered.status).to.equal(200);
+    expect(patchDelivered.body.data.status).to.equal('delivered');
+    expect(patchDelivered.body.data.deliveredAt).to.exist;
+  });
 });

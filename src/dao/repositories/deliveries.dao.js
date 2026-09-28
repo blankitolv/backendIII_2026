@@ -27,7 +27,7 @@ export class DeliveriesDao {
   }
 
   async updateById(id, data) {
-    return DeliveryModel.findByIdAndUpdate(id, data, { new: true });
+    return DeliveryModel.findByIdAndUpdate(id, data, { returnDocument: 'after' });
   }
 
   async deleteById(id) {

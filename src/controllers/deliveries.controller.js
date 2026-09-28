@@ -17,3 +17,8 @@ export const createDelivery = asyncHandler(async (req, res) => {
   const delivery = await deliveriesService.create(req.body);
   res.status(201).json({ status: 'success', data: toDeliveryDTO(delivery) });
 });
+
+export const updateDelivery = asyncHandler(async (req, res) => {
+  const delivery = await deliveriesService.update(req.params.id, req.body);
+  res.status(200).json({ status: 'success', data: toDeliveryDTO(delivery) });
+});

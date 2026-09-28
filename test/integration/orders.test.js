@@ -76,4 +76,42 @@ describe('integration - orders', () => {
     expect(res.status).to.equal(404);
     expect(res.body.error).to.equal(ERROR_CODES.RESOURCE_NOT_FOUND);
   });
+
+  it('PATCH /status, PUT y DELETE en pedidos funcionan correctamente con alias /api', async () => {
+    const { token, user } = await createUserAndToken();
+    const createRes = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send(buildOrder(user.id, { trackingNumber: `TEST-PATCH-${Date.now()}` }));
+    expect(createRes.status).to.equal(201);
+    const orderId = createRes.body.data.id;
+
+    // PATCH /api/orders/:id/status transiciona created -> assigned
+    const patchRes = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'assigned' });
+    expect(patchRes.status).to.equal(200);
+    expect(patchRes.body.data.status).to.equal('assigned');
+
+    // PUT /api/orders/:id transiciona assigned -> picked_up
+    const putRes = await request(app)
+      .put(`/api/orders/${orderId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'picked_up' });
+    expect(putRes.status).to.equal(200);
+    expect(putRes.body.data.status).to.equal('picked_up');
+
+    // DELETE /api/orders/:id
+    const deleteRes = await request(app)
+      .delete(`/api/orders/${orderId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(deleteRes.status).to.equal(200);
+    expect(deleteRes.body.data.deleted).to.equal(true);
+
+    const getRes = await request(app)
+      .get(`/api/orders/${orderId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(getRes.status).to.equal(404);
+  });
 });

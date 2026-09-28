@@ -147,6 +147,34 @@ describe('Plan 03 - modulo de mocks', () => {
     expect(await DocumentModel.countDocuments()).to.equal(0);
   });
 
+  it('GET /api/mocks/mockingusers genera 50 usuarios simulados sin persistir en BD', async () => {
+    const prevCount = await UserModel.countDocuments();
+    const res = await request(app).get('/api/mocks/mockingusers');
+    expect(res.status).to.equal(200);
+    expect(res.body.count).to.equal(50);
+    expect(res.body.data).to.have.length(50);
+    expect(await UserModel.countDocuments()).to.equal(prevCount);
+
+    const custom = await request(app).get('/api/mocks/mockingusers?cantidad=15');
+    expect(custom.status).to.equal(200);
+    expect(custom.body.count).to.equal(15);
+    expect(custom.body.data).to.have.length(15);
+  });
+
+  it('GET /api/mocks/mockingorders genera pedidos simulados sin persistir en BD', async () => {
+    const prevCount = await OrderModel.countDocuments();
+    const res = await request(app).get('/api/mocks/mockingorders');
+    expect(res.status).to.equal(200);
+    expect(res.body.count).to.equal(50);
+    expect(res.body.data).to.have.length(50);
+    expect(await OrderModel.countDocuments()).to.equal(prevCount);
+
+    const custom = await request(app).get('/api/mocks/mockingorders?cantidad=10');
+    expect(custom.status).to.equal(200);
+    expect(custom.body.count).to.equal(10);
+    expect(custom.body.data).to.have.length(10);
+  });
+
   it('generadores no usan _id de relacion: solo ids de insertMany previos', async () => {
     const result = await mocksService.generateData({ users: 3, couriers: 1, orders: 3, seed: 77 });
     expect(result.orders).to.equal(3);

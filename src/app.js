@@ -7,6 +7,7 @@ import { loggerMiddleware } from './middlewares/logger.middleware.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { swaggerRouter, sendSwaggerJson } from './config/swagger.js';
+import { getLoggerTest } from './controllers/logger.controller.js';
 
 export function createApp() {
   const app = express();
@@ -29,7 +30,16 @@ export function createApp() {
   app.use(crearRateLimiter());
 
   app.use(loggerMiddleware);
+
+  // Soporte dual: versionado formal en /api/v1 y alias directo en /api
   app.use('/api/v1', apiRouter);
+  app.use('/api', apiRouter);
+
+  // Diagnostico directo del logger
+  app.get('/loggerTest', getLoggerTest);
+  app.get('/api/loggerTest', getLoggerTest);
+  app.get('/api/v1/loggerTest', getLoggerTest);
+
   // UI interactiva en las dos rutas: la consigna cita /api/docs y el
   // versionado del proyecto usa /api/v1. El JSON plano sale del mismo
   // objeto en memoria, por eso ambas respuestas son identicas.

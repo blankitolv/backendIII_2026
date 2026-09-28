@@ -92,4 +92,15 @@ describe('Plan 04 - logging con Winston', () => {
     expect(errors.body.data.file).to.equal('error.log');
     expect(errors.body.data.lines.some((line) => line.includes('Entrada de prueba error.'))).to.equal(true);
   });
+
+  it('GET /loggerTest y GET /api/loggerTest responden 200 y registran las trazas', async () => {
+    const res1 = await request(app).get('/loggerTest');
+    expect(res1.status).to.equal(200);
+    expect(res1.body.status).to.equal('success');
+    expect(res1.body.data.written).to.equal(true);
+
+    const res2 = await request(app).get('/api/loggerTest');
+    expect(res2.status).to.equal(200);
+    expect(res2.body.status).to.equal('success');
+  });
 });

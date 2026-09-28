@@ -1,9 +1,19 @@
 import { Router } from 'express';
-import { listOrders, getOrder, createOrder } from '../controllers/orders.controller.js';
+import {
+  listOrders,
+  getOrder,
+  createOrder,
+  updateOrder,
+  deleteOrder
+} from '../controllers/orders.controller.js';
 import { uploadOrderProof, listOrderProofs } from '../controllers/documents.controller.js';
 import { requireAuth } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validate.middleware.js';
-import { orderValidator, orderIdValidator } from '../validators/orders.validator.js';
+import {
+  orderValidator,
+  orderIdValidator,
+  orderStatusValidator
+} from '../validators/orders.validator.js';
 import { uploaderProofs } from '../config/multer.js';
 import { documentParentValidator } from '../validators/documents.validator.js';
 
@@ -12,6 +22,9 @@ export const ordersRouter = Router();
 ordersRouter.get('/', requireAuth, listOrders);
 ordersRouter.get('/:id', requireAuth, validate(orderIdValidator), getOrder);
 ordersRouter.post('/', requireAuth, validate(orderValidator), createOrder);
+ordersRouter.put('/:id', requireAuth, validate(orderStatusValidator), updateOrder);
+ordersRouter.patch('/:id/status', requireAuth, validate(orderStatusValidator), updateOrder);
+ordersRouter.delete('/:id', requireAuth, validate(orderIdValidator), deleteOrder);
 
 ordersRouter.post(
   '/:id/proofs',

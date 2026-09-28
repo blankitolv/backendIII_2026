@@ -7,6 +7,7 @@ import { documentsRouter } from './documents.router.js';
 import { mocksRouter } from './mocks.router.js';
 import { healthRouter } from './health.router.js';
 import { loggerRouter } from './logger.router.js';
+import { getLoggerTest } from '../controllers/logger.controller.js';
 
 export const apiRouter = Router();
 

@@ -1,0 +1,57 @@
+name: shipnow
+
+services:
+  api:
+    build: .
+    container_name: shipnow-api
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Dentro de la red de compose el host de Mongo es "mongo", no localhost:
+      # se fija aca y no se deja al .env, porque el .env del desarrollo apunta a
+      # mongodb://localhost y dentro del contenedor ese host no existe.
+      MONGODB_URI: mongodb://mongo:27017/shipnow
+      JWT_SECRET: ${JWT_SECRET:-cambiar-en-produccion}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-2h}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-cambiar-en-produccion}
+      UPLOAD_DIR: ${UPLOAD_DIR:-uploads}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-5}
+      MIME_ALLOWED_DOCUMENTS: ${MIME_ALLOWED_DOCUMENTS:-application/pdf,image/jpeg,image/png}
+      MIME_ALLOWED_PROOFS: ${MIME_ALLOWED_PROOFS:-application/pdf,image/jpeg,image/png,application/xml}
+      MOCKS_MAX_AMOUNT: ${MOCKS_MAX_AMOUNT:-100}
+      DEFAULT_PAGE_SIZE: ${DEFAULT_PAGE_SIZE:-10}
+      MAX_PAGE_SIZE: ${MAX_PAGE_SIZE:-100}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    # Descomentar para que los binarios subidos sobrevivan al contenedor:
+    # uploads-data es un volumen nombrado (ver README, seccion Docker).
+    # volumes:
+    #   - uploads-data:/app/uploads
+
+  mongo:
+    image: mongo:7
+    container_name: shipnow-mongo
+    # Mongo queda solo en la red interna: el host no ve el puerto 27017 salvo
+    # que el usuario lo pida con ports.
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  # uploads-data:

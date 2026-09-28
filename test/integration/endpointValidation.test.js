@@ -74,13 +74,19 @@ describe('integration - endpointValidation', () => {
   after(releaseTestDatabase);
 
   it('toda ruta POST no exenta declara validacion: body malformado da 400', async () => {
-    const routes = collectWriteRoutes();
+    const routes = collectWriteRoutes().filter((route) => route.method === 'post');
     const multipart = EXEMPT_MULTIPART_POST.map((route) => route.path);
     const tested = routes.filter(
       (route) => !EXEMPT_POST.includes(route.path) && !multipart.includes(route.path)
     );
     expect(tested.map((route) => route.path).sort()).to.deep.equal(
-      ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/deliveries', '/api/v1/orders'].sort()
+      [
+        '/api/v1/auth/login',
+        '/api/v1/auth/register',
+        '/api/v1/deliveries',
+        '/api/v1/orders',
+        '/api/v1/users'
+      ].sort()
     );
     // Las exentas por multipart tienen que estar mounted de verdad: si una se perdiera al
     // escribir el router, la lista de arriba no la detectaria.
@@ -96,6 +102,9 @@ describe('integration - endpointValidation', () => {
       const register = await request(app).post('/api/v1/auth/register').send({});
       expect(register.status).to.equal(400);
       expect(register.body.error).to.equal(ERROR_CODES.INCOMPLETE_VALUES);
+      const user = await request(app).post('/api/v1/users').send({});
+      expect(user.status).to.equal(400);
+      expect(user.body.error).to.equal(ERROR_CODES.INCOMPLETE_VALUES);
       const login = await request(app).post('/api/v1/auth/login').send({});
       expect(login.status).to.equal(400);
       const order = await request(app)
@@ -116,6 +125,23 @@ describe('integration - endpointValidation', () => {
       createOrder.restore();
       createDelivery.restore();
     }
+  });
+
+  it('las rutas PUT y PATCH con body declaran validacion: body malformado da 400', async () => {
+    const { token } = await createUserAndToken();
+    const badStatus = await request(app)
+      .patch('/api/v1/orders/507f1f77bcf86cd799439011/status')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'invalid_status' });
+    expect(badStatus.status).to.equal(400);
+    expect(badStatus.body.error).to.equal(ERROR_CODES.INVALID_VALUES);
+
+    const badDeliveryStatus = await request(app)
+      .patch('/api/v1/deliveries/507f1f77bcf86cd799439011/status')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'invalid_status' });
+    expect(badDeliveryStatus.status).to.equal(400);
+    expect(badDeliveryStatus.body.error).to.equal(ERROR_CODES.INVALID_VALUES);
   });
 
   it('las rutas multipart rechazan un body sin archivo con 400', async () => {

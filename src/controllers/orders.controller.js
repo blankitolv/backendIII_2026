@@ -17,3 +17,13 @@ export const createOrder = asyncHandler(async (req, res) => {
   const order = await ordersService.create(req.body);
   res.status(201).json({ status: 'success', data: toOrderDTO(order) });
 });
+
+export const updateOrder = asyncHandler(async (req, res) => {
+  const order = await ordersService.update(req.params.id, req.body);
+  res.status(200).json({ status: 'success', data: toOrderDTO(order) });
+});
+
+export const deleteOrder = asyncHandler(async (req, res) => {
+  const result = await ordersService.delete(req.params.id);
+  res.status(200).json({ status: 'success', data: result });
+});

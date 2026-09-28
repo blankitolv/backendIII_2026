@@ -20,6 +20,13 @@ describe('integration - health', () => {
     expect(new Date(res.body.data.timestamp).getTime()).to.not.be.NaN;
   });
 
+  it('GET /api/health funciona directamente con el alias /api', async () => {
+    const res = await request(app).get('/api/health');
+    expect(res.status).to.equal(200);
+    expect(res.body.status).to.equal('success');
+    expect(res.body.data.status).to.equal('up');
+  });
+
   it('GET /api/v1/health/ready responde 200 cuando la base esta lista', async () => {
     const res = await request(app).get('/api/v1/health/ready');
     expect(res.status).to.equal(200);

@@ -31,7 +31,7 @@ export class OrdersDao {
   }
 
   async updateById(id, data) {
-    return OrderModel.findByIdAndUpdate(id, data, { new: true });
+    return OrderModel.findByIdAndUpdate(id, data, { returnDocument: 'after' });
   }
 
   async deleteById(id) {

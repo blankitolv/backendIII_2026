@@ -1,6 +1,7 @@
 import { usersDao } from '../dao/repositories/users.dao.js';
-import { notFound } from '../utils/errorFactory.js';
+import { notFound, duplicateResource } from '../utils/errorFactory.js';
 import { SORTABLE_FIELDS, parseSort } from '../constants/sortFields.js';
+import { hashPassword } from '../utils/hashPassword.js';
 
 export class UsersService {
   constructor({ users = usersDao } = {}) {
@@ -21,6 +22,36 @@ export class UsersService {
       throw notFound('usuario');
     }
     return user;
+  }
+
+  async create({ name, email, password, role }) {
+    const existing = await this.users.findByEmail(email);
+    if (existing) {
+      throw duplicateResource('email');
+    }
+    const hashed = await hashPassword(password);
+    return this.users.create({ name, email, password: hashed, role });
+  }
+
+  async update(id, data) {
+    const existing = await this.users.findById(id);
+    if (!existing) {
+      throw notFound('usuario');
+    }
+    const payload = { ...data };
+    if (payload.password) {
+      payload.password = await hashPassword(payload.password);
+    }
+    return this.users.updateById(id, payload);
+  }
+
+  async delete(id) {
+    const existing = await this.users.findById(id);
+    if (!existing) {
+      throw notFound('usuario');
+    }
+    await this.users.deleteById(id);
+    return { id, deleted: true };
   }
 }
 

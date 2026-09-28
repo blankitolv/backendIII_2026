@@ -195,6 +195,25 @@ describe('integration - uploads', () => {
     expect(Buffer.from(res.body).equals(contenido)).to.equal(true);
   });
 
+  it('descarga anidada /api/users/:uid/documents/:docId/download devuelve el archivo por streaming', async () => {
+    const { token, user } = await createUserAndToken();
+    const contenido = archivoBuffer(2048);
+    const subido = await request(app)
+      .post(`/api/users/${user.id}/documents`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('document', contenido, 'identidad.pdf');
+
+    const docId = subido.body.data.id;
+    const res = await request(app)
+      .get(`/api/users/${user.id}/documents/${docId}/download`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.headers['content-type']).to.equal('application/pdf');
+    expect(res.headers['content-disposition']).to.include('identidad.pdf');
+    expect(Buffer.from(res.body).equals(contenido)).to.equal(true);
+  });
+
   it('descarga sin permiso devuelve 403 y a metadato sin binario devuelve 404', async () => {
     const { token, user } = await createUserAndToken();
     const subido = await request(app)

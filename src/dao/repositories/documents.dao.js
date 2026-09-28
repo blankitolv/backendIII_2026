@@ -41,7 +41,7 @@ export class DocumentsDao {
   }
 
   async updateById(id, data) {
-    return DocumentModel.findByIdAndUpdate(id, data, { new: true });
+    return DocumentModel.findByIdAndUpdate(id, data, { returnDocument: 'after' });
   }
 
   async deleteById(id) {

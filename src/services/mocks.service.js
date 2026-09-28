@@ -113,7 +113,8 @@ export class MocksService {
     return couriers;
   }
 
-  generateOrdersMock(count, userIds, { startIndex = 0 } = {}) {
+  generateOrdersMock(count, userIds = [], { startIndex = 0 } = {}) {
+    const ids = userIds?.length ? userIds : Array.from({ length: 5 }, () => faker.database.mongodbObjectId());
     const taken = new Set();
     const orders = [];
     for (let i = 0; i < count; i += 1) {
@@ -125,7 +126,7 @@ export class MocksService {
       }
       taken.add(tracking);
       orders.push({
-        user: faker.helpers.arrayElement(userIds),
+        user: faker.helpers.arrayElement(ids),
         trackingNumber: tracking,
         status: faker.helpers.arrayElement(ORDER_STATUSES),
         origin: faker.location.city(),
@@ -136,6 +137,16 @@ export class MocksService {
       });
     }
     return orders;
+  }
+
+  getMockingUsers(count = 50) {
+    const validCount = Number.isInteger(count) && count > 0 ? Math.min(count, 500) : 50;
+    return this.generateUsersMock(validCount);
+  }
+
+  getMockingOrders(count = 50) {
+    const validCount = Number.isInteger(count) && count > 0 ? Math.min(count, 500) : 50;
+    return this.generateOrdersMock(validCount);
   }
 
   generateDeliveriesMock(count, orderIds, courierIds) {

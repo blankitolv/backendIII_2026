@@ -460,6 +460,35 @@ components:
         deliveries: 4
         documents: 3
         seed: 42
+    UserUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, customer, courier, store]
+      example:
+        name: Ana Gomez
+        role: customer
+    OrderStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [created, assigned, picked_up, in_transit, delivered, cancelled]
+      example:
+        status: in_transit
+    DeliveryStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [created, assigned, picked_up, in_transit, delivered, cancelled]
+      example:
+        status: in_transit
   responses:
     Error400:
       description: Peticion invalida
@@ -765,6 +794,36 @@ paths:
           $ref: '#/components/responses/Error401'
         '500':
           $ref: '#/components/responses/Error500'
+    post:
+      operationId: createUser
+      summary: Crear o registrar usuario
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
   /users/{id}:
     get:
       operationId: getUserById
@@ -790,6 +849,101 @@ paths:
                     $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    put:
+      operationId: updateUser
+      summary: Actualizar datos de usuario
+      tags: [users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      operationId: deleteUser
+      summary: Eliminar un usuario
+      tags: [users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Usuario eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /users/{id}/documents/{docId}/download:
+    get:
+      operationId: downloadUserDocument
+      summary: Descargar documento de usuario
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - name: docId
+          in: path
+          required: true
+          description: Identificador del documento
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Binario del archivo
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
         '404':
           $ref: '#/components/responses/Error404'
         '500':
@@ -897,6 +1051,111 @@ paths:
           $ref: '#/components/responses/Error404'
         '500':
           $ref: '#/components/responses/Error500'
+    put:
+      operationId: updateOrder
+      summary: Actualizar estado o datos de un pedido
+      tags: [orders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusInput'
+      responses:
+        '200':
+          description: Pedido actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
+    delete:
+      operationId: deleteOrder
+      summary: Cancelar o eliminar un pedido
+      tags: [orders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Pedido eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /orders/{id}/status:
+    patch:
+      operationId: updateOrderStatus
+      summary: Actualizar estado del pedido
+      tags: [orders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusInput'
+      responses:
+        '200':
+          description: Estado de pedido actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '500':
+          $ref: '#/components/responses/Error500'
   /deliveries:
     get:
       operationId: listDeliveries
@@ -979,6 +1238,43 @@ paths:
       responses:
         '200':
           description: Entrega encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Delivery'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /deliveries/{id}/status:
+    patch:
+      operationId: updateDeliveryStatus
+      summary: Actualizar estado de una entrega
+      tags: [deliveries]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryStatusInput'
+      responses:
+        '200':
+          description: Entrega actualizada
           content:
             application/json:
               schema:
@@ -1421,6 +1717,82 @@ paths:
           $ref: '#/components/responses/Error413'
         '415':
           $ref: '#/components/responses/Error415'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/mockingusers:
+    get:
+      operationId: getMockingUsers
+      summary: Generar usuarios simulados en memoria con Faker
+      tags: [mocks]
+      security:
+        - internalToken: []
+      parameters:
+        - name: cantidad
+          in: query
+          required: false
+          description: Cantidad de usuarios simulados a generar (por defecto 50)
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de usuarios simulados en memoria
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, count, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /mocks/mockingorders:
+    get:
+      operationId: getMockingOrders
+      summary: Generar pedidos simulados en memoria con Faker
+      tags: [mocks]
+      security:
+        - internalToken: []
+      parameters:
+        - name: cantidad
+          in: query
+          required: false
+          description: Cantidad de pedidos simulados a generar (por defecto 50)
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de pedidos simulados en memoria
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, count, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
         '500':
           $ref: '#/components/responses/Error500'
   /mocks/generateData:

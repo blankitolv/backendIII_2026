@@ -46,10 +46,26 @@ export const getErrorLogs = asyncHandler(async (req, res) => {
 
 export const postLoggerTest = asyncHandler(async (req, res) => {
   const log = req.logger;
-  log.debug('Entrada de prueba debug.');
-  log.http('Entrada de prueba http.');
-  log.info('Entrada de prueba info.');
-  log.warn('Entrada de prueba warn.');
+  log.fatal('Entrada de prueba fatal.');
   log.error('Entrada de prueba error.');
+  log.warn('Entrada de prueba warn.');
+  log.info('Entrada de prueba info.');
+  log.http('Entrada de prueba http.');
+  log.debug('Entrada de prueba debug.');
   res.status(201).json({ status: 'success', data: { written: true } });
+});
+
+export const getLoggerTest = asyncHandler(async (req, res) => {
+  const log = req.logger;
+  log.fatal('Entrada de prueba fatal.');
+  log.error('Entrada de prueba error.');
+  log.warn('Entrada de prueba warn.');
+  log.info('Entrada de prueba info.');
+  log.http('Entrada de prueba http.');
+  log.debug('Entrada de prueba debug.');
+  res.status(200).json({
+    status: 'success',
+    message: 'Logger test ejecutado en todos los niveles',
+    data: { written: true }
+  });
 });

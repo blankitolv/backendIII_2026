@@ -44,6 +44,26 @@ export class OrdersService {
     logger.debug(`Cambio de estado de envio ${id}: ${order.status} -> ${next}`);
     return this.orders.updateById(id, { status: next });
   }
+
+  async update(id, data) {
+    if (data.status) {
+      return this.updateStatus(id, data.status);
+    }
+    const order = await this.orders.findById(id);
+    if (!order) {
+      throw notFound('pedido');
+    }
+    return this.orders.updateById(id, data);
+  }
+
+  async delete(id) {
+    const order = await this.orders.findById(id);
+    if (!order) {
+      throw notFound('pedido');
+    }
+    await this.orders.deleteById(id);
+    return { id, deleted: true };
+  }
 }
 
 export const ordersService = new OrdersService();
