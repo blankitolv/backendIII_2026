@@ -1,6 +1,5 @@
 import { ordersDao } from '../dao/repositories/orders.dao.js';
-import { CustomError } from '../utils/customError.js';
-import { ERROR_CODES } from '../constants/errors.js';
+import { notFound, invalidState } from '../utils/errorFactory.js';
 import { ORDER_STATUS, ORDER_TRANSITIONS } from '../constants/orderStatus.js';
 
 export class OrdersService {
@@ -12,8 +11,12 @@ export class OrdersService {
     return this.orders.paginate(query);
   }
 
-  getById(id) {
-    return this.orders.findById(id);
+  async getById(id) {
+    const order = await this.orders.findById(id);
+    if (!order) {
+      throw notFound('pedido');
+    }
+    return order;
   }
 
   create(data) {
@@ -23,11 +26,11 @@ export class OrdersService {
   async updateStatus(id, next) {
     const order = await this.orders.findById(id);
     if (!order) {
-      throw new CustomError(ERROR_CODES.NOT_FOUND, 'Order not found');
+      throw notFound('pedido');
     }
     const allowed = ORDER_TRANSITIONS[order.status] ?? [];
     if (!allowed.includes(next)) {
-      throw new CustomError(ERROR_CODES.INVALID_STATUS, 'Invalid status transition');
+      throw invalidState(order.status, allowed);
     }
     return this.orders.updateById(id, { status: next });
   }

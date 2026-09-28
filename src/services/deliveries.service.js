@@ -1,4 +1,5 @@
 import { deliveriesDao } from '../dao/repositories/deliveries.dao.js';
+import { notFound } from '../utils/errorFactory.js';
 
 export class DeliveriesService {
   constructor({ deliveries = deliveriesDao } = {}) {
@@ -9,8 +10,12 @@ export class DeliveriesService {
     return this.deliveries.paginate(query);
   }
 
-  getById(id) {
-    return this.deliveries.findById(id);
+  async getById(id) {
+    const delivery = await this.deliveries.findById(id);
+    if (!delivery) {
+      throw notFound('entrega');
+    }
+    return delivery;
   }
 
   create(data) {

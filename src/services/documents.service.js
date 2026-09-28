@@ -1,4 +1,5 @@
 import { documentsDao } from '../dao/repositories/documents.dao.js';
+import { notFound } from '../utils/errorFactory.js';
 
 export class DocumentsService {
   constructor({ documents = documentsDao } = {}) {
@@ -9,8 +10,12 @@ export class DocumentsService {
     return this.documents.paginate(query);
   }
 
-  getById(id) {
-    return this.documents.findById(id);
+  async getById(id) {
+    const document = await this.documents.findById(id);
+    if (!document) {
+      throw notFound('documento');
+    }
+    return document;
   }
 
   create(data) {

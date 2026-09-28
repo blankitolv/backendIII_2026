@@ -3,6 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { apiRouter } from './routes/index.js';
 import { loggerMiddleware } from './middlewares/logger.middleware.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { swaggerSpec } from './config/swagger.js';
 
@@ -17,9 +18,7 @@ export function createApp() {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.get('/api/v1/docs.json', (req, res) => res.json(swaggerSpec));
   app.get('/api/docs.json', (req, res) => res.json(swaggerSpec));
-  app.use((req, res) => {
-    res.status(404).json({ status: 'error', error: 'NOT_FOUND', message: 'Route not found' });
-  });
+  app.use(notFoundHandler);
   app.use(errorMiddleware);
   return app;
 }

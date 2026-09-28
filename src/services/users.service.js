@@ -1,4 +1,5 @@
 import { usersDao } from '../dao/repositories/users.dao.js';
+import { notFound } from '../utils/errorFactory.js';
 
 export class UsersService {
   constructor({ users = usersDao } = {}) {
@@ -9,8 +10,12 @@ export class UsersService {
     return this.users.paginate(query);
   }
 
-  getById(id) {
-    return this.users.findById(id);
+  async getById(id) {
+    const user = await this.users.findById(id);
+    if (!user) {
+      throw notFound('usuario');
+    }
+    return user;
   }
 }
 

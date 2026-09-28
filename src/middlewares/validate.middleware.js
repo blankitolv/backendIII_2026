@@ -1,9 +1,9 @@
-import { CustomError } from '../utils/customError.js';
-import { ERROR_CODES } from '../constants/errors.js';
+import { incompleteValues, invalidValues } from '../utils/errorFactory.js';
 
 export function validate(schema) {
   return (req, res, next) => {
-    const errors = [];
+    const missing = [];
+    const invalid = [];
     for (const section of ['body', 'query', 'params']) {
       const rules = schema[section];
       if (!rules) continue;
@@ -11,15 +11,22 @@ export function validate(schema) {
       for (const [field, rule] of Object.entries(rules)) {
         const value = source[field];
         if (rule.required && (value === undefined || value === null || value === '')) {
-          errors.push(`${section}.${field} is required`);
-        }
-        if (value !== undefined && rule.enum && !rule.enum.includes(value)) {
-          errors.push(`${section}.${field} is invalid`);
+          missing.push(`${section}.${field}`);
+        } else if (value !== undefined && value !== null && value !== '') {
+          if (rule.enum && !rule.enum.includes(value)) {
+            invalid.push(`${section}.${field}`);
+          }
+          if (rule.type && typeof value !== rule.type) {
+            invalid.push(`${section}.${field}`);
+          }
         }
       }
     }
-    if (errors.length) {
-      throw new CustomError(ERROR_CODES.INVALID_DATA, errors.join(', '));
+    if (missing.length) {
+      throw incompleteValues(missing);
+    }
+    if (invalid.length) {
+      throw invalidValues([...new Set(invalid)]);
     }
     next();
   };

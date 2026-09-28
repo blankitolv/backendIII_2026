@@ -2,8 +2,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/config.js';
 import { usersDao } from '../dao/repositories/users.dao.js';
 import { hashPassword, comparePassword } from '../utils/hashPassword.js';
-import { CustomError } from '../utils/customError.js';
-import { ERROR_CODES } from '../constants/errors.js';
+import { duplicateResource, unauthorized } from '../utils/errorFactory.js';
 
 export class AuthService {
   constructor({ users = usersDao } = {}) {
@@ -13,7 +12,7 @@ export class AuthService {
   async register({ name, email, password, role }) {
     const existing = await this.users.findByEmail(email);
     if (existing) {
-      throw new CustomError(ERROR_CODES.CONFLICT, 'Email already registered');
+      throw duplicateResource('email');
     }
     const hashed = await hashPassword(password);
     return this.users.create({ name, email, password: hashed, role });
@@ -22,11 +21,11 @@ export class AuthService {
   async login({ email, password }) {
     const user = await this.users.findByEmail(email);
     if (!user) {
-      throw new CustomError(ERROR_CODES.UNAUTHORIZED, 'Invalid credentials');
+      throw unauthorized();
     }
     const ok = await comparePassword(password, user.password);
     if (!ok) {
-      throw new CustomError(ERROR_CODES.UNAUTHORIZED, 'Invalid credentials');
+      throw unauthorized();
     }
     const token = jwt.sign(
       { sub: String(user._id), role: user.role },
@@ -40,7 +39,7 @@ export class AuthService {
     try {
       return jwt.verify(token, config.jwtSecret);
     } catch {
-      throw new CustomError(ERROR_CODES.UNAUTHORIZED, 'Invalid or expired token');
+      throw unauthorized();
     }
   }
 }
