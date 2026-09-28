@@ -5,10 +5,11 @@ import { app } from '../../src/app.js';
 import { ERROR_CODES } from '../../src/constants/errors.js';
 import { useTestDatabase, releaseTestDatabase } from '../helpers/db.js';
 import { createUserAndToken } from '../helpers/auth.js';
-import { buildUser } from '../helpers/factories.js';
+import { buildUser, buildOrder, buildDelivery } from '../helpers/factories.js';
 import { ordersDao } from '../../src/dao/repositories/orders.dao.js';
 import { deliveriesDao } from '../../src/dao/repositories/deliveries.dao.js';
 import { usersDao } from '../../src/dao/repositories/users.dao.js';
+import { documentsDao } from '../../src/dao/repositories/documents.dao.js';
 
 const API_MOUNT_ORDER = [
   '/auth',
@@ -30,6 +31,16 @@ const EXEMPT_POST = [
   '/api/v1/mocks/deliveries',
   '/api/v1/mocks/full',
   '/api/v1/logger/test'
+];
+
+// Rutas POST cuyo cuerpo no es JSON: lo parsea Multer como multipart/form-data y lo valida el
+// uploader, no un esquema de `src/validators/`. No son "sin validacion": sin archivo devuelven
+// 400, y el segundo test lo comprueba una por una.
+const EXEMPT_MULTIPART_POST = [
+  { path: '/api/v1/users/{id}/documents', campo: 'document' },
+  { path: '/api/v1/users/{id}/license', campo: 'license' },
+  { path: '/api/v1/orders/{id}/proofs', campo: 'proof' },
+  { path: '/api/v1/deliveries/{id}/proofs', campo: 'proof' }
 ];
 
 function collectWriteRoutes() {
@@ -64,10 +75,19 @@ describe('integration - endpointValidation', () => {
 
   it('toda ruta POST no exenta declara validacion: body malformado da 400', async () => {
     const routes = collectWriteRoutes();
-    const tested = routes.filter((route) => !EXEMPT_POST.includes(route.path));
+    const multipart = EXEMPT_MULTIPART_POST.map((route) => route.path);
+    const tested = routes.filter(
+      (route) => !EXEMPT_POST.includes(route.path) && !multipart.includes(route.path)
+    );
     expect(tested.map((route) => route.path).sort()).to.deep.equal(
       ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/deliveries', '/api/v1/orders'].sort()
     );
+    // Las exentas por multipart tienen que estar mounted de verdad: si una se perdiera al
+    // escribir el router, la lista de arriba no la detectaria.
+    const mounted = routes.map((route) => route.path);
+    for (const route of multipart) {
+      expect(mounted).to.include(route);
+    }
     const { token } = await createUserAndToken();
     const findByEmail = sinon.stub(usersDao, 'findByEmail').resolves(null);
     const createOrder = sinon.stub(ordersDao, 'create').resolves({});
@@ -96,6 +116,28 @@ describe('integration - endpointValidation', () => {
       createOrder.restore();
       createDelivery.restore();
     }
+  });
+
+  it('las rutas multipart rechazan un body sin archivo con 400', async () => {
+    const { token, user } = await createUserAndToken();
+    const pedido = await ordersDao.create(buildOrder(user.id));
+    const entrega = await deliveriesDao.create(buildDelivery(pedido._id, user.id));
+
+    for (const route of EXEMPT_MULTIPART_POST) {
+      const id = route.path.startsWith('/api/v1/users/')
+        ? user.id
+        : route.path.startsWith('/api/v1/orders/')
+          ? pedido._id
+          : entrega._id;
+      const res = await request(app)
+        .post(route.path.replace('{id}', String(id)))
+        .set('Authorization', `Bearer ${token}`);
+      expect(res.status, route.path).to.equal(400);
+      expect(res.body.error, route.path).to.equal(ERROR_CODES.FILE_REQUIRED);
+    }
+    // Ninguna exencion puede convertir un body vacio en un documento: es el equivalente al
+    // `expect(createOrder.called).to.equal(false)` del test de arriba.
+    expect(await documentsDao.paginate({})).to.have.property('total', 0);
   });
 
   it('un body valido si llega al service', async () => {

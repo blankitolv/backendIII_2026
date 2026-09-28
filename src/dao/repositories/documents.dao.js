@@ -31,6 +31,23 @@ export class DocumentsDao {
     return { items, total, page, limit };
   }
 
+  async paginateByFilter(filter = {}, query = {}) {
+    const { page, limit, skip } = normalizePagination(query);
+    const [items, total] = await Promise.all([
+      DocumentModel.find(filter).skip(skip).limit(limit),
+      DocumentModel.countDocuments(filter)
+    ]);
+    return { items, total, page, limit };
+  }
+
+  async listByType(type, query = {}) {
+    return this.paginateByFilter({ type }, query);
+  }
+
+  async listByParent(parentModel, parentId, query = {}) {
+    return this.paginateByFilter({ parentModel, parentId }, query);
+  }
+
   async updateById(id, data) {
     return DocumentModel.findByIdAndUpdate(id, data, { new: true });
   }

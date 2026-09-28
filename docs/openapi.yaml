@@ -188,7 +188,7 @@ components:
         updatedAt: 2026-09-28T10:00:00.000Z
     Document:
       type: object
-      required: [id, originalName, mimeType, size, type, parentModel, parentId, uploadedAt]
+      required: [id, originalName, mimeType, size, type, parentModel, parentId, uploadedAt, downloadUrl]
       properties:
         id:
           type: string
@@ -209,6 +209,9 @@ components:
         uploadedAt:
           type: string
           format: date-time
+        downloadUrl:
+          type: string
+          description: Ruta de descarga. El campo path nunca se expone en las respuestas JSON.
       example:
         id: 64f1a2b3c4d5e6f70819293e
         originalName: comprobante.pdf
@@ -218,6 +221,7 @@ components:
         parentModel: Delivery
         parentId: 64f1a2b3c4d5e6f70819293c
         uploadedAt: 2026-09-28T10:00:00.000Z
+        downloadUrl: /api/v1/documents/64f1a2b3c4d5e6f70819293e/download
     AuthMe:
       type: object
       required: [id, role]
@@ -1033,6 +1037,358 @@ paths:
           $ref: '#/components/responses/Error404'
         '500':
           $ref: '#/components/responses/Error500'
+    delete:
+      operationId: deleteDocument
+      summary: Eliminar un documento y su archivo fisico
+      description: Solo ADMIN. Borra el metadato, el archivo en disco y la referencia en el padre.
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Documento eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    required: [id, deleted]
+                    properties:
+                      id:
+                        type: string
+                      deleted:
+                        type: boolean
+              example:
+                status: success
+                data:
+                  id: 64f1a2b3c4d5e6f70819293e
+                  deleted: true
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /documents/{id}/download:
+    get:
+      operationId: downloadDocument
+      summary: Descargar el archivo de un documento
+      description: >-
+        Devuelve el binario. El campo path nunca se expone en las respuestas JSON: esta es la
+        unica forma de obtener el archivo. El service valida los permisos y que la ruta
+        resuelta siga dentro de la raiz de uploads.
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '200':
+          description: Archivo binario
+          headers:
+            Content-Disposition:
+              description: attachment con el nombre original del archivo
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /users/{id}/documents:
+    get:
+      operationId: listUserDocuments
+      summary: Listar documentos de un usuario
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada de documentos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/DocumentList'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      operationId: uploadUserDocument
+      summary: Subir un documento de identidad a un usuario
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [document]
+              properties:
+                document:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Documento creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '415':
+          $ref: '#/components/responses/Error415'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /users/{id}/license:
+    post:
+      operationId: uploadCourierLicense
+      summary: Subir la licencia de un repartidor
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [license]
+              properties:
+                license:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Licencia creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '415':
+          $ref: '#/components/responses/Error415'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /orders/{id}/proofs:
+    get:
+      operationId: listOrderProofs
+      summary: Listar comprobantes de un pedido
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada de comprobantes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/DocumentList'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      operationId: uploadOrderProof
+      summary: Subir un comprobante de entrega a un pedido
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [proof]
+              properties:
+                proof:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Comprobante creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '415':
+          $ref: '#/components/responses/Error415'
+        '500':
+          $ref: '#/components/responses/Error500'
+  /deliveries/{id}/proofs:
+    get:
+      operationId: listDeliveryProofs
+      summary: Listar comprobantes de una entrega
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Lista paginada de comprobantes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/DocumentList'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '500':
+          $ref: '#/components/responses/Error500'
+    post:
+      operationId: uploadDeliveryProof
+      summary: Subir un comprobante de entrega a una entrega
+      tags: [documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [proof]
+              properties:
+                proof:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Comprobante creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, data]
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '413':
+          $ref: '#/components/responses/Error413'
+        '415':
+          $ref: '#/components/responses/Error415'
+        '500':
+          $ref: '#/components/responses/Error500'
   /mocks/generateData:
     post:
       operationId: generateMocks
@@ -1082,11 +1438,18 @@ paths:
       security:
         - internalToken: []
       parameters:
-        - $ref: '#/components/parameters/cantidad'
-        - $ref: '#/components/parameters/seed'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - name: type
+          in: query
+          required: false
+          description: Filtra por categoria de documento
+          schema:
+            type: string
+            enum: [user_document, courier_license, delivery_proof]
       responses:
         '200':
-          description: Usuarios sembrados
+          description: Lista paginada
           content:
             application/json:
               schema:

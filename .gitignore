@@ -5,4 +5,5 @@ logs/
 uploads/*
 !uploads/.gitkeep
 coverage/
+.nyc_output/
 NOTAS-PLANES.md

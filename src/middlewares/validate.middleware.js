@@ -1,4 +1,5 @@
 import { incompleteValues, invalidValues } from '../utils/errorFactory.js';
+import { isValidObjectId } from '../validators/documents.validator.js';
 
 export function validate(schema) {
   return (req, res, next) => {
@@ -17,6 +18,9 @@ export function validate(schema) {
             invalid.push(`${section}.${field}`);
           }
           if (rule.type && typeof value !== rule.type) {
+            invalid.push(`${section}.${field}`);
+          }
+          if (rule.format === 'objectId' && !isValidObjectId(value)) {
             invalid.push(`${section}.${field}`);
           }
         }
