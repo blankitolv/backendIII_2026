@@ -8,7 +8,7 @@ await connectDb(config.mongoUri);
 const server = app.listen(config.port, () => {
   logger.info(`ShipNow escuchando en puerto ${config.port}.`, {
     env: config.nodeEnv,
-    version: process.env.npm_package_version ?? '1.0.0'
+    version: '1.0.0'
   });
 });
 

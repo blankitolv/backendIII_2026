@@ -9,15 +9,26 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "mocha test/unit --recursive --timeout 10000",
-    "test:watch": "mocha test/unit --recursive --watch",
-    "test:coverage": "mocha test/unit --recursive --timeout 10000",
+    "test": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha \"test/**/*.test.js\"",
+    "test:unit": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha \"test/unit/**/*.test.js\"",
+    "test:integration": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha \"test/integration/**/*.test.js\"",
+    "test:watch": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret mocha --watch",
+    "test:coverage": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/shipnow-test JWT_SECRET=test-only-secret c8 --reporter=text --reporter=lcov mocha",
     "lint": "eslint src test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
+  "c8": {
+    "all": true,
+    "include": ["src/**/*.js"],
+    "reporter": ["text", "lcov"],
+    "check-coverage": true,
+    "lines": 70,
+    "functions": 60,
+    "branches": 55
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -33,7 +44,9 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
+    "c8": "^12.0.0",
     "chai": "^5.3.3",
+    "cross-env": "^10.1.0",
     "eslint": "^10.11.0",
     "mocha": "^12.0.2",
     "mongodb-memory-server": "^11.3.0",

@@ -1,4 +1,5 @@
 import { DocumentModel } from '../models/document.model.js';
+import { normalizePagination } from '../../constants/pagination.js';
 
 export class DocumentsDao {
   async create(data) {
@@ -21,8 +22,8 @@ export class DocumentsDao {
     return DocumentModel.findById(id);
   }
 
-  async paginate({ page = 1, limit = 10 } = {}) {
-    const skip = (page - 1) * limit;
+  async paginate(query = {}) {
+    const { page, limit, skip } = normalizePagination(query);
     const [items, total] = await Promise.all([
       DocumentModel.find().skip(skip).limit(limit),
       DocumentModel.countDocuments()

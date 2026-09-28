@@ -1,8 +1,13 @@
+import mongoose from 'mongoose';
 import request from 'supertest';
 import { expect } from 'chai';
 import { app } from '../../src/app.js';
 import { mocksService } from '../../src/services/mocks.service.js';
-import { ERROR_CODES } from '../../src/constants/errors.js';
+import { ERROR_CODES, ERROR_STATUS } from '../../src/constants/errors.js';
+import { ROLES } from '../../src/constants/roles.js';
+import { useTestDatabase, releaseTestDatabase } from '../helpers/db.js';
+import { createUserAndToken } from '../helpers/auth.js';
+import { buildUser } from '../helpers/factories.js';
 
 function assertErrorShape(body) {
   expect(body).to.have.all.keys('status', 'error', 'message');
@@ -10,6 +15,8 @@ function assertErrorShape(body) {
 }
 
 describe('Plan 02 - manejo global de errores', () => {
+  before(useTestDatabase);
+  after(releaseTestDatabase);
   it('ruta inexistente -> 404 RESOURCE_NOT_FOUND', async () => {
     const res = await request(app).get('/api/v1/no-existe-xyz');
     expect(res.status).to.equal(404);
@@ -66,5 +73,33 @@ describe('Plan 02 - manejo global de errores', () => {
     assertErrorShape(payload);
     expect(payload.error).to.equal(ERROR_CODES.INTERNAL_SERVER_ERROR);
     expect(payload).to.not.have.property('stack');
+  });
+
+  it('transversal: todo error respeta { status, error, message } y su status', async () => {
+    const customer = await createUserAndToken();
+    const admin = await createUserAndToken({ role: ROLES.ADMIN });
+    const raw = buildUser();
+    await request(app).post('/api/v1/auth/register').send(raw);
+    const id = new mongoose.Types.ObjectId();
+    const cases = [
+      request(app).get('/api/v1/auth/me'),
+      request(app).get(`/api/v1/users/${id}`).set('Authorization', `Bearer ${customer.token}`),
+      request(app).get(`/api/v1/orders/${id}`).set('Authorization', `Bearer ${customer.token}`),
+      request(app).get(`/api/v1/deliveries/${id}`).set('Authorization', `Bearer ${customer.token}`),
+      request(app).get(`/api/v1/documents/${id}`).set('Authorization', `Bearer ${customer.token}`),
+      request(app).get('/api/v1/logger/recent').set('Authorization', `Bearer ${customer.token}`),
+      request(app).get('/api/v1/logger/recent'),
+      request(app).post('/api/v1/auth/register').send(raw),
+      request(app).post('/api/v1/mocks/generateData').send({ users: -1 }),
+      request(app).get('/api/v1/logger/recent').set('Authorization', `Bearer ${admin.token}`)
+    ];
+    for (const run of cases) {
+      const res = await run;
+      if (res.status < 400) {
+        continue;
+      }
+      assertErrorShape(res.body);
+      expect(res.status, `status de ${res.body.error}`).to.equal(ERROR_STATUS[res.body.error]);
+    }
   });
 });

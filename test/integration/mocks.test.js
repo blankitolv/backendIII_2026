@@ -1,3 +1,6 @@
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { expect } from 'chai';
@@ -152,5 +155,30 @@ describe('Plan 03 - modulo de mocks', () => {
     for (const order of orders) {
       expect(userIds.has(String(order.user))).to.equal(true);
     }
+  });
+
+  it('en produccion responde 403 FORBIDDEN sin tocar la base', async () => {
+    // Caso explicito de production permitido por el plan: el guard niega
+    // antes de llegar al service, asi que el subproceso no necesita Mongo.
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const appUrl = pathToFileURL(path.resolve(currentDir, '../../src/app.js')).href;
+    const script = `
+      Promise.all([import('${appUrl}'), import('supertest')]).then(async ([{ app }, { default: request }]) => {
+        const res = await request(app).post('/api/v1/mocks/full?cantidad=5');
+        console.log('STATUS=' + res.status + ' ERROR=' + res.body.error);
+      });
+    `;
+    const env = {
+      ...process.env,
+      NODE_ENV: 'production',
+      MONGODB_URI: 'mongodb://localhost:27017/shipnow-test',
+      JWT_SECRET: 'test-only-secret'
+    };
+    const output = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+      env,
+      encoding: 'utf8',
+      timeout: 60000
+    });
+    expect(output).to.include(`STATUS=403 ERROR=${ERROR_CODES.FORBIDDEN}`);
   });
 });

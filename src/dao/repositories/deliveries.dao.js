@@ -1,4 +1,5 @@
 import { DeliveryModel } from '../models/delivery.model.js';
+import { normalizePagination } from '../../constants/pagination.js';
 
 export class DeliveriesDao {
   async create(data) {
@@ -21,8 +22,8 @@ export class DeliveriesDao {
     return DeliveryModel.findById(id);
   }
 
-  async paginate({ page = 1, limit = 10 } = {}) {
-    const skip = (page - 1) * limit;
+  async paginate(query = {}) {
+    const { page, limit, skip } = normalizePagination(query);
     const [items, total] = await Promise.all([
       DeliveryModel.find().skip(skip).limit(limit),
       DeliveryModel.countDocuments()

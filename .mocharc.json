@@ -1,0 +1,6 @@
+{
+  "timeout": 20000,
+  "exit": true,
+  "recursive": true,
+  "file": "test/setup/hooks.js"
+}

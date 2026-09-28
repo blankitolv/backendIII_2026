@@ -1,4 +1,5 @@
 import { UserModel } from '../models/user.model.js';
+import { normalizePagination } from '../../constants/pagination.js';
 
 export class UsersDao {
   async create(data) {
@@ -25,8 +26,8 @@ export class UsersDao {
     return UserModel.findOne({ email });
   }
 
-  async paginate({ page = 1, limit = 10 } = {}) {
-    const skip = (page - 1) * limit;
+  async paginate(query = {}) {
+    const { page, limit, skip } = normalizePagination(query);
     const [items, total] = await Promise.all([
       UserModel.find().skip(skip).limit(limit),
       UserModel.countDocuments()
